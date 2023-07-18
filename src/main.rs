@@ -15,12 +15,11 @@ extern {
 fn print_type_of<T>(_: &T) {
     println!("{}", std::any::type_name::<T>())
 }
-
 fn main() {
     let mut a = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 2, 3, 41, 2, 1, 3, 4, 1, 2, 3, 4, 1, 2, 3];
 
     println!("a = {:?}", a.len());
-    let tamanho = a.len() as i32;
+    let _tamanho = a.len() as i32;
 
     // unsafe {
     //     testando(a.as_mut_ptr(), tamanho);
