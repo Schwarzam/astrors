@@ -14,6 +14,20 @@ mod fits_io {
 
 }
 
+use ndarray::{ArrayD, IxDyn};
+
+fn vec_to_ndarray(data: Vec<f32>, shape: Vec<usize>) -> ArrayD<f32> {
+    let shape_ix = IxDyn(&shape);
+    ArrayD::from_shape_vec(shape_ix, data).unwrap() // handle the error appropriately in your code
+}
+
+fn bytes_to_f32_vec(bytes: &[u8]) -> Vec<f32> {
+    bytes
+        .chunks(4)
+        .map(|b| f32::from_bits(u32::from_be_bytes([b[0], b[1], b[2], b[3]])))
+        .collect()
+}
+
 #[test]
 fn read_test() -> std::io::Result<()>{
     // crate::fits_io::read_file();
@@ -88,6 +102,16 @@ fn read_test() -> std::io::Result<()>{
             break;
         }
     }
+
+    let mut databuf = [0; 100*100*4];
+    let data = f.read(&mut databuf)?;
+
+    let vect = bytes_to_f32_vec(&databuf);
+
+    let shape = vec![100, 100];
+    let ndarray = vec_to_ndarray(vect, shape);
+
+    println!("ndarray = {:?}", ndarray);
 
     Ok(())
 }
