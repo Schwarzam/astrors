@@ -1,5 +1,3 @@
-use std::path::Path;
-
 fn main() {
     
     println!("cargo:rustc-link-search=lib/fitsio2");
