@@ -1,16 +1,17 @@
-
-struct Header {
+use std::fs::File;
+use std::io::Read;
+pub struct Header {
     cards: Vec<Card>,
 }
 
-struct Card {
-    keyword: String,
-    value: String,
-    comment: Option<String>,
+pub struct Card {
+    pub keyword: String,
+    pub value: String,
+    pub comment: Option<String>,
 }
 
 impl Header {
-    fn new() -> Self {
+    pub fn new() -> Self {
         Header {
             cards: Vec::new(),
         }
@@ -20,10 +21,20 @@ impl Header {
         self.cards.push(card);
     }
 
-    fn get_card(&self, keyword: &str) -> Option<&Card> {
+    pub fn get_card(&self, keyword: &str) -> Option<&Card> {
         for card in &self.cards {
             if card.keyword == keyword {
                 return Some(card);
+            }
+        }
+
+        None
+    }
+
+    pub fn get_value(&self, keyword: &str) -> Option<&str> {
+        for card in &self.cards {
+            if card.keyword == keyword {
+                return Some(&card.value);
             }
         }
 
@@ -87,9 +98,116 @@ impl Header {
         self.cards.iter_mut()
     }
 
-    fn read_from_buffer(&mut self, &mut buf : [u8]){
-        
+    pub fn pretty_print(&self) {
+        for card in &self.cards {
+            println!("{} = {} / {}", card.keyword, card.value, card.comment.as_ref().unwrap_or(&String::new()));
+        }
     }
 
+    pub fn read_from_filebytes(&mut self, f: &mut File) -> std::io::Result<()>{
 
+        'outer: loop {
+            let mut buffer= [0; 2880];
+            let n = f.read(&mut buffer[..])?;
+            
+            for card in buffer.chunks(80) {
+                let card_str = String::from_utf8_lossy(card).trim_end().to_string();
+                println!("card_str: {}", card_str);
+                // We are checking whether the keyword is HIERARCH.
+                // If it is, we need to handle it specially.
+                if card_str == "END" {
+                    break 'outer;
+                }
+
+                else if card_str.starts_with("COMMENT") || card_str.starts_with("HISTORY") {
+                    let splits: Vec<&str> = card_str.splitn(2, ' ').collect();
+        
+                    // Let's check if we have at least 2 parts (COMMENT/HISTORY, value).
+                    // If not, it's an error.
+                    if splits.len() < 2 {
+                        // Handle error
+                        continue;
+                    }
+        
+                    let value = splits[1].to_string(); // Extracting value.
+        
+                    println!("{} value: {}", splits[0], value);
+
+                    let card = Card {
+                        keyword: splits[0].to_string(),
+                        value: value,
+                        comment: None,
+                    };
+                    self.add_card(card);
+                }
+
+                else if card_str.starts_with("HIERARCH") {
+                    let splits: Vec<&str> = card_str.splitn(3, ' ').collect();
+        
+                    // Let's check if we have at least 3 parts (HIERARCH, keyword, value).
+                    // If not, it's an error.
+                    if splits.len() < 3 {
+                        // Handle error
+                        continue;
+                    }
+        
+                    let keyword = splits[1].to_string(); // Extracting keyword.
+                    let remaining = splits[2]; // The remaining string after the keyword.
+        
+                    let (value, comment) = if let Some(idx) = remaining.find('/') {
+                        // If there is a '/' character, we split the remaining string into value and comment.
+                        (remaining[..idx].trim().to_string(), Some(remaining[idx+1..].trim().to_string()))
+                    } else {
+                        // Otherwise, the whole remaining string is the value.
+                        (remaining.trim().to_string(), None)
+                    };
+        
+                    println!("HIERARCH keyword: {}, value: {}, comment: {:?}", keyword, value, comment);
+
+                    let card = Card {
+                        keyword: keyword,
+                        value: value,
+                        comment: comment,
+                    };
+                    self.add_card(card);
+
+                } else {
+                    // For non-HIERARCH keywords, the format is simpler.
+        
+                    // We first check if there is a '=' character.
+                    // If not, it's an error.
+                    if let Some(idx) = card_str.find('=') {
+                        let keyword = card_str[..idx].trim().to_string(); // Extracting keyword.
+                        let remaining = card_str[idx+1..].trim(); // The remaining string after the '='.
+        
+                        let (value, comment) = if let Some(idx) = remaining.find('/') {
+                            // If there is a '/' character, we split the remaining string into value and comment.
+                            (remaining[..idx].trim().to_string(), Some(remaining[idx+1..].trim().to_string()))
+                        } else {
+                            // Otherwise, the whole remaining string is the value.
+                            (remaining.trim().to_string(), None)
+                        };
+        
+                        println!("keyword: {}, value: {}, comment: {:?}", keyword, value, comment);
+                        let card = Card {
+                            keyword: keyword,
+                            value: value,
+                            comment: comment,
+                        };
+                        self.add_card(card);
+
+                    } else {
+                        // Handle error
+                        continue;
+                    }
+
+                }
+
+                
+            } // for loop chunks 80
+
+        } // loop over 2880 bytes buffer 
+
+        Ok(())
+    } // read_from_buffer
 }
