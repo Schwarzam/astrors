@@ -1,16 +1,4 @@
-use ndarray::{ArrayD, IxDyn};
 
-fn vec_to_ndarray(data: Vec<f32>, shape: Vec<usize>) -> ArrayD<f32> {
-    let shape_ix = IxDyn(&shape);
-    ArrayD::from_shape_vec(shape_ix, data).unwrap() // handle the error appropriately in your code
-}
-
-fn bytes_to_f32_vec(bytes: &[u8]) -> Vec<f32> {
-    bytes
-        .chunks(4)
-        .map(|b| f32::from_bits(u32::from_be_bytes([b[0], b[1], b[2], b[3]])))
-        .collect()
-}
 
 mod io {
     pub mod header;
@@ -22,8 +10,11 @@ mod io {
 fn read_test() -> std::io::Result<()>{
     // crate::fits_io::read_file();
 
+    rayon::ThreadPoolBuilder::new().num_threads(8).build_global().unwrap();
+
     use std::fs::File;
-    let mut f = File::open("./testdata/test.fits")?;
+    // let mut f = File::open("./testdata/test.fits")?
+    let mut f: File = File::open("/Users/gustavo/Downloads/bpmask_proc_SPLUS-GAL-20180325-043054.fits")?;
 
     let mut header = crate::io::header::Header::new();
     header.read_from_filebytes(&mut f)?;
@@ -31,6 +22,9 @@ fn read_test() -> std::io::Result<()>{
     header.pretty_print();
     
     crate::io::image::Data::read_from_filebytes(&mut f, &mut header)?;
+
+    use rayon::prelude::*;
+    println!("{} threads", rayon::current_num_threads());
 
     Ok(())
 }

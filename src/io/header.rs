@@ -1,5 +1,6 @@
 use std::fs::File;
 use std::io::Read;
+use std::io::{Error, ErrorKind};
 pub struct Header {
     cards: Vec<Card>,
 }
@@ -31,14 +32,22 @@ impl Header {
         None
     }
 
-    pub fn get_value(&self, keyword: &str) -> Option<&str> {
+    pub fn get_value(&self, keyword: &str) -> Result<&str, std::io::Error> {
         for card in &self.cards {
             if card.keyword == keyword {
-                return Some(&card.value);
+                return Ok(&card.value);
             }
         }
+    
+        Err(Error::new(ErrorKind::Other, format!("{} keyword not found", keyword).as_str()))
+    }
 
-        None
+    pub fn parse_header_value<T: std::str::FromStr>(&self, keyword: &str) -> Result<T, std::io::Error> {
+        let value_str = self.get_value(keyword)?;
+        value_str.parse::<T>().map_err(|_| {
+            let err_msg = format!("Failed to parse {} as {}", keyword, std::any::type_name::<T>());
+            std::io::Error::new(std::io::ErrorKind::Other, err_msg)
+        })
     }
 
     fn get_card_mut(&mut self, keyword: &str) -> Option<&mut Card> {

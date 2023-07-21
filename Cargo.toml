@@ -6,9 +6,10 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-fitsio = { version="0.21.2", features=["array"]}
+rayon = "1.7.0"
 ndarray = "0.15.6"
 ndarray-stats = "0.5.1"
+memmap = "0.7"
 
 [build-dependencies]
 cc = "1.0.79"
