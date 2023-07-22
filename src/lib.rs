@@ -1,4 +1,4 @@
-
+use ndarray::ArrayD;
 
 mod io {
     pub mod header;

@@ -1,35 +1,17 @@
 use rayon::prelude::*;
 use ndarray::{ArrayD, IxDyn};
 
-pub enum DataType {
-    Int8 = 8,
-    Int16 = 16,
-    Int32 = 32,
-    Float32 = -32,
-    Float64 = -64
-}
+use std::io::Read;
+use byteorder::{BigEndian, ByteOrder};
 
-impl DataType {
-    pub fn nbytes(&self) -> usize {
-        match self {
-            DataType::Int8 => 1,    // 8 bits = 1 byte
-            DataType::Int16 => 2,   // 16 bits = 2 bytes
-            DataType::Int32 => 4,   // 32 bits = 4 bytes
-            DataType::Float32 => 4, // 32 bits = 4 bytes
-            DataType::Float64 => 8, // 64 bits = 8 bytes
-        }
-    }
+use crate::io::header::Header;
 
-    pub fn from_bitpix(bitpix: i32) -> Option<DataType> {
-        match bitpix {
-            8 => Some(DataType::Int8),
-            16 => Some(DataType::Int16),
-            32 => Some(DataType::Int32),
-            -32 => Some(DataType::Float32),
-            -64 => Some(DataType::Float64),
-            _ => panic!("Unknown bitpix value"),
-        }
-    }
+pub enum DataType { // Decided to leave the Rust native types for better understanting.
+    u8,
+    i16,
+    int32,
+    float32,
+    float64,
 }
 
 pub fn bytes_to_i8_vec(bytes: &[u8]) -> Vec<i8> {
@@ -57,11 +39,80 @@ pub fn bytes_to_f32_vec(bytes: &[u8]) -> Vec<f32> {
         .collect()
 }
 
-pub fn bytes_to_f64_vec(bytes: &[u8]) -> Vec<f64> {
+pub fn bytes_to_f64_vec(bytes : &[u8]) -> Vec<f64> {
     bytes
         .par_chunks(8)
         .map(|b| f64::from_bits(u64::from_be_bytes([b[0], b[1], b[2], b[3], b[4], b[5], b[6], b[7]])))
         .collect()
+}
+
+pub fn pre_bytes_to_f64_vec(bytes: Vec<u8>, output: &mut Vec<f64>) { // Preallocated vect
+    assert!(output.len() * 8 <= bytes.len());
+    output.par_iter_mut()
+        .enumerate()
+        .for_each(|(i, item)| {
+            let chunk = &bytes[i * 8..(i+1) * 8];
+            *item = f64::from_bits(u64::from_be_bytes([
+                chunk[0], chunk[1], chunk[2], chunk[3],
+                chunk[4], chunk[5], chunk[6], chunk[7]
+            ]));
+        });
+}
+
+pub fn pre_bytes_to_f32_vec(bytes: Vec<u8>, output: &mut Vec<f32>) {
+    assert!(output.len() * 4 <= bytes.len());
+    output.par_iter_mut()
+        .enumerate()
+        .for_each(|(i, item)| {
+            let chunk = &bytes[i * 4..(i+1) * 4];
+            *item = f32::from_bits(u32::from_be_bytes([
+                chunk[0], chunk[1], chunk[2], chunk[3]
+            ]));
+        });
+}
+
+pub fn pre_bytes_to_i8_vec(bytes: Vec<u8>, output: &mut Vec<i8>) {
+    assert!(output.len() <= bytes.len());
+    output.par_iter_mut()
+        .enumerate()
+        .for_each(|(i, item)| {
+            *item = bytes[i] as i8;
+        });
+}
+
+pub fn pre_bytes_to_i16_vec(bytes: Vec<u8>, output: &mut Vec<i16>) {
+    assert!(output.len() * 2 <= bytes.len());
+    output.par_iter_mut()
+        .enumerate()
+        .for_each(|(i, item)| {
+            let chunk = &bytes[i * 2..(i+1) * 2];
+            *item = i16::from_be_bytes([
+                chunk[0], chunk[1]
+            ]);
+        });
+}
+
+pub fn pre_bytes_to_i32_vec(bytes: Vec<u8>, output: &mut Vec<i32>) {
+    assert!(output.len() * 4 <= bytes.len());
+    output.par_iter_mut()
+        .enumerate()
+        .for_each(|(i, item)| {
+            let chunk = &bytes[i * 4..(i+1) * 4];
+            *item = i32::from_be_bytes([
+                chunk[0], chunk[1], chunk[2], chunk[3]
+            ]);
+        });
+}
+
+pub fn get_shape(header: &Header) -> Result<Vec<usize>, std::io::Error> {
+    let mut shape = Vec::new();
+    let naxis: usize = header.parse_header_value("NAXIS")?;
+    for i in 1..=naxis {
+        let key = format!("NAXIS{}", i);
+        let value: usize = header.parse_header_value(&key)?;
+        shape.push(value);
+    }
+    Ok(shape)
 }
 
 pub fn vec_to_ndarray<T>(data: Vec<T>, shape: Vec<usize>) -> ArrayD<T> {
