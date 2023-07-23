@@ -6,12 +6,52 @@ use byteorder::{BigEndian, ByteOrder};
 
 use crate::io::header::Header;
 
+#[derive(Debug, PartialEq)]
 pub enum DataType { // Decided to leave the Rust native types for better understanting.
-    u8,
-    i16,
-    int32,
-    float32,
-    float64,
+    U8,
+    I16,
+    I32,
+    F32,
+    F64,
+}
+
+use std::fmt;
+
+impl fmt::Display for DataType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            DataType::U8 => write!(f, "U8"),
+            DataType::I16 => write!(f, "I16"),
+            DataType::I32 => write!(f, "I32"),
+            DataType::F32 => write!(f, "F32"),
+            DataType::F64 => write!(f, "F64"),
+        }
+    }
+}
+
+impl Eq for DataType {}
+
+impl DataType {
+    pub fn nbytes(&self) -> usize {
+        match self {
+            DataType::U8 => 1,    // 8 bits = 1 byte
+            DataType::I16 => 2,   // 16 bits = 2 bytes
+            DataType::I32 => 4,   // 32 bits = 4 bytes
+            DataType::F32 => 4, // 32 bits = 4 bytes
+            DataType::F64 => 8, // 64 bits = 8 bytes
+        }
+    }
+
+    pub fn from_bitpix(bitpix: i32) -> Option<DataType> {
+        match bitpix {
+            8 => Some(DataType::U8),
+            16 => Some(DataType::I16),
+            32 => Some(DataType::I32),
+            -32 => Some(DataType::F32),
+            -64 => Some(DataType::F64),
+            _ => panic!("Unknown bitpix value"),
+        }
+    }
 }
 
 pub fn bytes_to_i8_vec(bytes: &[u8]) -> Vec<i8> {
@@ -71,12 +111,12 @@ pub fn pre_bytes_to_f32_vec(bytes: Vec<u8>, output: &mut Vec<f32>) {
         });
 }
 
-pub fn pre_bytes_to_i8_vec(bytes: Vec<u8>, output: &mut Vec<i8>) {
+pub fn pre_bytes_to_u8_vec(bytes: Vec<u8>, output: &mut Vec<u8>) {
     assert!(output.len() <= bytes.len());
     output.par_iter_mut()
         .enumerate()
         .for_each(|(i, item)| {
-            *item = bytes[i] as i8;
+            *item = bytes[i] as u8;
         });
 }
 
