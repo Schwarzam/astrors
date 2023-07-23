@@ -18,8 +18,10 @@ impl Header {
         }
     }
 
-    fn add_card(&mut self, card: Card) {
-        self.cards.push(card);
+    fn add_card(&mut self, card: Option<Card>) {
+        if let Some(card) = card {
+            self.cards.push(card);
+        }
     }
 
     pub fn get_card(&self, keyword: &str) -> Option<&Card> {
@@ -32,14 +34,17 @@ impl Header {
         None
     }
 
-    pub fn get_value(&self, keyword: &str) -> Result<&str, std::io::Error> {
+    pub fn get_value(&self, keyword: &str) -> Result<&str, Error> {
         for card in &self.cards {
             if card.keyword == keyword {
-                return Ok(&card.value);
+                return match &card.value {
+                    Some(value) => Ok(value),
+                    None => Err(Error::new(ErrorKind::Other, format!("{} keyword has no value", keyword))),
+                };
             }
         }
     
-        Err(Error::new(ErrorKind::Other, format!("{} keyword not found", keyword).as_str()))
+        Err(Error::new(ErrorKind::Other, format!("{} keyword not found", keyword)))
     }
 
     pub fn parse_header_value<T: std::str::FromStr>(&self, keyword: &str) -> Result<T, std::io::Error> {
@@ -108,7 +113,7 @@ impl Header {
 
     pub fn pretty_print(&self) {
         for card in &self.cards {
-            println!("{} = {} / {}", card.keyword, card.value, card.comment.as_ref().unwrap_or(&String::new()));
+            println!("{} = {} / {}", card.keyword, card.value.as_ref().unwrap_or(&String::new()), card.comment.as_ref().unwrap_or(&String::new()));
         }
     }
 
@@ -117,15 +122,33 @@ impl Header {
         'outer: loop {
             let mut buffer= [0; 2880];
             let n = f.read(&mut buffer[..])?;
-            
+            let mut last_card : Option<Card> = None;
+
             for card in buffer.chunks(80) {
                 let card_str = String::from_utf8_lossy(card).trim_end().to_string();
+
                 if card_str == "END" {
+                    self.add_card(last_card);
                     break 'outer;
                 }
 
-                let card = Card::parse_card(card_str);
-                println!("card: {:?}", card);
+                if last_card.is_some() && !card_str.contains("CONTINUE  ") {
+                    self.add_card(last_card);
+                    last_card = None;
+                }
+                
+                if card_str.contains("CONTINUE  ") {
+                    if last_card.is_none() {
+                        return Err(Error::new(ErrorKind::Other, "CONTINUE card without previous card"));
+                    }
+                    Card::continue_card(&mut last_card, card_str);
+                }
+                else {
+                    last_card = Card::parse_card(card_str);
+                }
+
+
+                
 
                 
             } // for loop chunks 80
@@ -136,18 +159,35 @@ impl Header {
     } // read_from_buffer
 
     pub fn write_to<W: Write>(&self, writer: &mut W) -> std::io::Result<()> {
+        let mut bytes_count = 0;
         for card in &self.cards {
-            card.write_to(writer)?;
+            card.write_to(writer, &mut bytes_count)?;
         }
         let mut end_string = "END".to_string();
         end_string.push_str(&" ".repeat(80 - end_string.len()));  // Pad the END card with spaces
+        bytes_count += 80;
+
+        println!("bytes_count: {}", bytes_count);
         writer.write_all(end_string.as_bytes())?;  // Write the END card
-        let remainder = (self.cards.len() + 1) * 80 % 2880;
+        let remainder = bytes_count as usize % 2880;
         if remainder != 0 {
             let padding = " ".repeat(2880 - remainder);  // Pad to the next block
             writer.write_all(padding.as_bytes())?;  // Write the padding
         }
         Ok(())
+    }
+
+    
+
+    fn pad_to_fits_block<W: Write>(writer: &mut W, current_size: usize) -> std::io::Result<()> {
+        const FITS_BLOCK_SIZE: usize = 2880;
+        let remainder = current_size % FITS_BLOCK_SIZE;
+        if remainder > 0 {
+            let padding = FITS_BLOCK_SIZE - remainder;
+            writer.write_all(&vec![b' '; padding])
+        } else {
+            Ok(())
+        }
     }
 
 }

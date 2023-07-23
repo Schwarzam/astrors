@@ -201,7 +201,7 @@ fn read_image_test() -> std::io::Result<()>{
 
     let mut header = crate::io::header::Header::new();
     header.read_from_file(&mut f)?;
-    // header.pretty_print();
+    header.pretty_print();
 
     use std::io::Write;
     // let mut file = File::create(WRITE_FILE.as_str())?;
