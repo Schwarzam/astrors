@@ -7,8 +7,13 @@ lazy_static! {
     static ref GLOBAL_FILE_NAME: String = {
         // Put the file name here
         // "/Users/gustavo/Downloads/bpmask_proc_SPLUS-GAL-20180325-043054.fits".to_string()
-        "/Users/gustavo/Downloads/test.fits".to_string()
+        "/Users/gustavo/Downloads/j02-FRIN-b20201225e0125-Z-00-MainSurvey.fits".to_string()
+        // "/Users/gustavo/Downloads/test.fits".to_string()
 
+    };
+
+    static ref WRITE_FILE: String = {
+        "/Users/gustavo/Downloads/output2.fits".to_string()
     };
 }
 

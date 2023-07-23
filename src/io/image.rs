@@ -85,7 +85,7 @@ impl Data {
 
 impl Data {
 
-    pub fn read_from_filebytes(f: &mut File, header: &mut Header) -> Result<Data, std::io::Error>  {
+    pub fn read_from_buffer(f: &mut File, header: &mut Header) -> Result<Data, std::io::Error>  {
         let _naxis: usize = header.parse_header_value("NAXIS")?;
     
         let bitpix : i32 = header.parse_header_value("BITPIX")?;
@@ -99,13 +99,26 @@ impl Data {
         let total_bytes = shape.iter().fold(1, |acc, x| acc * x) * dtype_bytes;
         let mut databuf = vec![0; total_bytes]; 
         let _ = f.read(&mut databuf)?;
+
+        // Read until the end of the current FITS block
+        let remainder = total_bytes % 2880;
+        if remainder != 0 {
+            let mut padding = vec![0; 2880 - remainder];
+            let _ = f.read(&mut padding)?;
+            // println!("Padding: {:?}", padding.len());
+        }
+
+        Data::image_buffer_to_ndarray(databuf, shape, dtype)
+
         
-        match dtype { //Pre allocate
+    }
+
+    pub fn image_buffer_to_ndarray(databuf: Vec<u8>, shape: Vec<usize>, dtype: DataType) -> Result<Data, std::io::Error>  {
+        match dtype {
             DataType::u8 => {
                 let mut vect: Vec<u8> = vec![0; databuf.len() / 1];
                 pre_bytes_to_u8_vec(databuf, &mut vect);
 
-                let shape = get_shape(header)?;
                 let ndarray = vec_to_ndarray(vect, shape);
                 
                 let mut data = Data::new();
@@ -119,7 +132,6 @@ impl Data {
                 let mut vect: Vec<i16> = vec![0; databuf.len() / 2];
                 pre_bytes_to_i16_vec(databuf, &mut vect);
                 
-                let shape = get_shape(header)?;
                 let ndarray = vec_to_ndarray(vect, shape);
 
                 let mut data = Data::new();
@@ -132,7 +144,6 @@ impl Data {
                 let mut vect: Vec<i32> = vec![0; databuf.len() / 4];
                 pre_bytes_to_i32_vec(databuf, &mut vect);
                 
-                let shape = get_shape(header)?;
                 let ndarray = vec_to_ndarray(vect, shape);
 
                 let mut data = Data::new();
@@ -145,7 +156,6 @@ impl Data {
                 let mut vect: Vec<f32> = vec![0.0; databuf.len() / 4];
                 pre_bytes_to_f32_vec(databuf, &mut vect);
 
-                let shape = get_shape(header)?;
                 let ndarray = vec_to_ndarray(vect, shape);
                 
                 let mut data = Data::new();
@@ -156,10 +166,8 @@ impl Data {
             },
                 DataType::f64 => {
                 let mut vect: Vec<f64> = vec![0.0; databuf.len() / 8];
-
                 pre_bytes_to_f64_vec(databuf, &mut vect);
-                
-                let shape = get_shape(header)?;
+
                 let ndarray = vec_to_ndarray(vect, shape);
 
                 let mut data = Data::new();
@@ -180,7 +188,7 @@ impl Data {
 #[test]
 fn read_image_test() -> std::io::Result<()>{
     // crate::fits_io::read_file();
-    use crate::GLOBAL_FILE_NAME;
+    use crate::{GLOBAL_FILE_NAME, WRITE_FILE};
 
     use std::time::Instant;
     let now = Instant::now();
@@ -192,11 +200,20 @@ fn read_image_test() -> std::io::Result<()>{
     let mut f: File = File::open(GLOBAL_FILE_NAME.as_str())?;
 
     let mut header = crate::io::header::Header::new();
-    header.read_from_filebytes(&mut f)?;
-    header.pretty_print();
-    
-    let data = crate::io::image::Data::read_from_filebytes(&mut f, &mut header)?;
+    header.read_from_file(&mut f)?;
+    // header.pretty_print();
+
+    use std::io::Write;
+    // let mut file = File::create(WRITE_FILE.as_str())?;
+    let mut file = File::create("output.fits")?;
+    header.write_to(&mut file)?;
+    file.flush()?;
+
+    let data = crate::io::image::Data::read_from_buffer(&mut f, &mut header)?;
     println!("Data: {:?}", data);
+    if data.dtype == DataType::f32 {
+        println!("Data Mean: {:?}", data.f32.unwrap().mean());
+    }
 
     use rayon::prelude::*;
     println!("{} threads", rayon::current_num_threads());
