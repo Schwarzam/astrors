@@ -30,19 +30,19 @@ impl fmt::Debug for Data {
     
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self.dtype {
-            DataType::U8 => {
+            DataType::u8 => {
                 write!(f, "Data: {:?}, dtype {:?}", self.u8, self.dtype)
             }
-            DataType::I16 => {
+            DataType::i16 => {
                 write!(f, "Data: {:?}, dtype {}", self.i16, self.dtype)
             }
-            DataType::I32 => {
+            DataType::i32 => {
                 write!(f, "Data: {:?}, dtype {}", self.i32, self.dtype)
             }
-            DataType::F32 => {
+            DataType::f32 => {
                 write!(f, "Data: {:?}, dtype {}", self.f32, self.dtype)
             }
-            DataType::F64 => {
+            DataType::f64 => {
                 write!(f, "Data: {:?}, dtype {}", self.f64, self.dtype)
             }
         }
@@ -58,24 +58,24 @@ impl Data {
             i32: None,
             f32: None,
             f64: None,
-            dtype: DataType::U8,
+            dtype: DataType::u8,
         }
     }
     pub fn pretty_print(&self) {
         match self.dtype {
-            DataType::U8 => {
+            DataType::u8 => {
                 println!("Data: {:?}", self.u8);
             },
-            DataType::I16 => {
+            DataType::i16 => {
                 println!("Data: {:?}", self.i16);
             },
-            DataType::I32 => {
+            DataType::i32 => {
                 println!("Data: {:?}", self.i32);
             },
-            DataType::F32 => {
+            DataType::f32 => {
                 println!("Data: {:?}", self.f32);
             },
-            DataType::F64 => {
+            DataType::f64 => {
                 println!("Data: {:?}", self.f64);
             },
         }
@@ -101,7 +101,7 @@ impl Data {
         let _ = f.read(&mut databuf)?;
         
         match dtype { //Pre allocate
-            DataType::U8 => {
+            DataType::u8 => {
                 let mut vect: Vec<u8> = vec![0; databuf.len() / 1];
                 pre_bytes_to_u8_vec(databuf, &mut vect);
 
@@ -110,12 +110,12 @@ impl Data {
                 
                 let mut data = Data::new();
                 data.u8 = Some(ndarray);      
-                data.dtype = DataType::U8;
+                data.dtype = DataType::u8;
 
 
                 Ok(data)
             },
-            DataType::I16 => {
+            DataType::i16 => {
                 let mut vect: Vec<i16> = vec![0; databuf.len() / 2];
                 pre_bytes_to_i16_vec(databuf, &mut vect);
                 
@@ -124,11 +124,11 @@ impl Data {
 
                 let mut data = Data::new();
                 data.i16 = Some(ndarray);      
-                data.dtype = DataType::I16;
+                data.dtype = DataType::i16;
 
                 Ok(data)
             },
-            DataType::I32 => {
+            DataType::i32 => {
                 let mut vect: Vec<i32> = vec![0; databuf.len() / 4];
                 pre_bytes_to_i32_vec(databuf, &mut vect);
                 
@@ -137,11 +137,11 @@ impl Data {
 
                 let mut data = Data::new();
                 data.i32 = Some(ndarray);      
-                data.dtype = DataType::I32;
+                data.dtype = DataType::i32;
 
                 Ok(data)
             },
-            DataType::F32 => {
+            DataType::f32 => {
                 let mut vect: Vec<f32> = vec![0.0; databuf.len() / 4];
                 pre_bytes_to_f32_vec(databuf, &mut vect);
 
@@ -150,11 +150,11 @@ impl Data {
                 
                 let mut data = Data::new();
                 data.f32 = Some(ndarray);      
-                data.dtype = DataType::F32;
+                data.dtype = DataType::f32;
 
                 Ok(data)
             },
-                DataType::F64 => {
+                DataType::f64 => {
                 let mut vect: Vec<f64> = vec![0.0; databuf.len() / 8];
 
                 pre_bytes_to_f64_vec(databuf, &mut vect);
@@ -164,7 +164,7 @@ impl Data {
 
                 let mut data = Data::new();
                 data.f64 = Some(ndarray);      
-                data.dtype = DataType::F64;
+                data.dtype = DataType::f64;
 
                 Ok(data)
             },

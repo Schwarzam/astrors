@@ -1,7 +1,5 @@
-use ndarray::ArrayD;
-
-use std::sync::Mutex;
-
+#![allow(non_camel_case_types)]
+#![allow(unused)]
 use lazy_static::lazy_static;
 
 // Declare the global variable with the desired type
