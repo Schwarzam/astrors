@@ -1,6 +1,7 @@
 use std::fs::File;
 use std::io::Read;
 use std::io::{Error, ErrorKind};
+use std::ops::Index;
 
 use crate::io::header::card::Card;
 
@@ -9,7 +10,17 @@ pub struct Header {
     cards: Vec<Card>,
 }
 
+impl Index<&str> for Header {
+    type Output = Card;
 
+    fn index(&self, card_name: &str) -> &Self::Output {
+        if let Some(card) = self.get_card(card_name){
+            return card;
+        }{
+            panic!("Card {} not found", card_name);
+        }
+    }
+}
 
 impl Header {
     pub fn new() -> Self {
@@ -149,17 +160,10 @@ impl Header {
                     else{
                         return Err(Error::new(ErrorKind::Other, "CONTINUE card without previous card"))
                     }
-
-                    
                 }
                 else {
                     last_card = Card::parse_card(card_str);
                 }
-
-
-                
-
-                
             } // for loop chunks 80
 
         } // loop over 2880 bytes buffer 

@@ -212,7 +212,7 @@ fn read_image_test() -> std::io::Result<()>{
     if data.dtype == DataType::f32 {
         println!("Data Mean: {:?}", data.f32.unwrap().mean());
     }
-
+    
     use rayon::prelude::*;
     println!("{} threads", rayon::current_num_threads());
 
