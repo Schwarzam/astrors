@@ -108,9 +108,7 @@ impl Data {
             // println!("Padding: {:?}", padding.len());
         }
 
-        Data::image_buffer_to_ndarray(databuf, shape, dtype)
-
-        
+        Data::image_buffer_to_ndarray(databuf, shape, dtype) 
     }
 
     pub fn image_buffer_to_ndarray(databuf: Vec<u8>, shape: Vec<usize>, dtype: DataType) -> Result<Data, std::io::Error>  {

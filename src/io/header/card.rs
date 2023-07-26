@@ -37,6 +37,33 @@ fn check_type(s: &str) -> TYPE {
 }
 
 impl Card {
+    // Function to set the value and take ownership of the passed variable
+    pub fn set_value(&mut self, new_value: String) {
+        self.value = Some(new_value);
+    }
+
+    pub fn get_value_clone(&self) -> String {
+        self.value.clone().unwrap_or("".to_string()).clone()
+    }
+
+    // Function to set the comment and take ownership of the passed variable
+    pub fn set_comment(&mut self, new_comment: String) {
+        self.comment = Some(new_comment);
+    }
+
+    pub fn get_comment_clone(&self) -> String {
+        self.comment.clone().unwrap_or("".to_string()).clone()
+    }
+
+    // Function to set the keyword and take ownership of the passed variable
+    pub fn set_keyword(&mut self, new_keyword: String) {
+        self.keyword = new_keyword;
+    }
+
+    pub fn get_keyword_clone(&self) -> String {
+        self.keyword.clone()
+    }
+
     fn write_formatted_string<W: Write>(&self, writer: &mut W, mut string: String, bytes_count: &mut i32) -> std::io::Result<()> {
         string.truncate(80);
         string.push_str(&" ".repeat(80 - string.len()));
@@ -60,12 +87,25 @@ impl Card {
             }
         }
     }
+
+    pub fn value_ref(&self) -> &str {
+        self.value.as_ref().unwrap()
+    }
+
+    pub fn keyword_ref(&self) -> &str {
+        self.keyword.as_ref()
+    }
+
+    pub fn comment_ref(&self) -> &str {
+        self.comment.as_ref().unwrap()
+    }
     
     fn write_string_card<W: Write>(&self, writer: &mut W, keyword_string: String, bytes_count: &mut i32) -> std::io::Result<()> {
         let mut formatted_value = self.value.clone().unwrap();
         let remaining_value = if formatted_value.len() > 67 {
-            let remainder = Some(formatted_value[68..].to_string());
-            formatted_value.truncate(68);
+            let remainder = Some(formatted_value[67..].to_string());
+            formatted_value.truncate(67);
+            formatted_value.push_str("&");
             remainder
         } else {
             None
@@ -80,8 +120,8 @@ impl Card {
         if let Some(mut remaining_value) = remaining_value {
             while !remaining_value.is_empty() {
                 let len = remaining_value.len();
-                let take = len.min(68);
-                let continue_card = format!("CONTINUE  '{}'", &remaining_value[..take]);
+                let take = len.min(67);
+                let continue_card = format!("CONTINUE  '{}&'", &remaining_value[..take]);
                 self.write_formatted_string(writer, continue_card, bytes_count)?;
     
                 remaining_value.drain(..take);
@@ -146,10 +186,17 @@ impl Card {
 
     pub fn continue_card(card: &mut Option<Card>, card_str: String){
         if let Some(card) = card {
-            let value;
+            let mut value;
             if card_str.starts_with("CONTINUE  "){
                 value = card_str.splitn(2, "CONTINUE  ").collect::<Vec<&str>>()[1].trim().replace("'", "").to_string();
-                card.value = Some(format!("{}{}", card.value.as_ref().unwrap_or(&"".to_string()), value));
+                println!("value = {}", value);
+
+                value = value.strip_suffix("&").unwrap_or(&value).to_string();
+
+                let mut last_value = card.get_value_clone();
+                last_value = last_value.strip_suffix("&").unwrap_or(&last_value).to_string();
+
+                card.set_value(format!("{}{}", last_value, value));
             }
         }
     }

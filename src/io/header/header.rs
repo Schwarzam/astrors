@@ -141,7 +141,16 @@ impl Header {
                     if last_card.is_none() {
                         return Err(Error::new(ErrorKind::Other, "CONTINUE card without previous card"));
                     }
-                    Card::continue_card(&mut last_card, card_str);
+                    
+                    let value = last_card.as_ref().unwrap().value_ref();
+                    if value.trim().ends_with("&"){
+                        Card::continue_card(&mut last_card, card_str);
+                    }
+                    else{
+                        return Err(Error::new(ErrorKind::Other, "CONTINUE card without previous card"))
+                    }
+
+                    
                 }
                 else {
                     last_card = Card::parse_card(card_str);
