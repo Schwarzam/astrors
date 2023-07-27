@@ -20,6 +20,7 @@ impl Index<&str> for Header {
             panic!("Card {} not found", card_name);
         }
     }
+
 }
 
 impl Header {
@@ -35,27 +36,20 @@ impl Header {
         }
     }
 
-    pub fn get_card(&self, keyword: &str) -> Option<&Card> {
-        for card in &self.cards {
-            if card.keyword == keyword {
-                return Some(card);
-            }
-        }
-
-        None
+    pub fn get_card(&self, card_name: &str) -> Option<&Card> {
+        self.cards.iter().find(|&card| card.keyword == card_name)
     }
 
     pub fn get_value(&self, keyword: &str) -> Result<&str, Error> {
-        for card in &self.cards {
-            if card.keyword == keyword {
-                return match &card.value {
+        self.cards.iter().find(|card| card.keyword == keyword).map_or(
+            Err(Error::new(ErrorKind::Other, format!("{} keyword not found", keyword))),
+            |card| {
+                match &card.value {
                     Some(value) => Ok(value),
                     None => Err(Error::new(ErrorKind::Other, format!("{} keyword has no value", keyword))),
-                };
+                }
             }
-        }
-    
-        Err(Error::new(ErrorKind::Other, format!("{} keyword not found", keyword)))
+        )
     }
 
     pub fn parse_header_value<T: std::str::FromStr>(&self, keyword: &str) -> Result<T, std::io::Error> {
@@ -77,29 +71,11 @@ impl Header {
     }
 
     fn remove_card(&mut self, keyword: &str) -> Option<Card> {
-        let mut idx = None;
-
-        for (i, card) in self.cards.iter().enumerate() {
-            if card.keyword == keyword {
-                idx = Some(i);
-                break;
-            }
-        }
-
-        if let Some(idx) = idx {
-            Some(self.cards.remove(idx))
-        } else {
-            None
-        }
+        self.cards.iter().position(|card| card.keyword == keyword).map(|idx| self.cards.remove(idx))
     }
 
     fn contains(&self, keyword: &str) -> bool {
-        for card in &self.cards {
-            if card.keyword == keyword {
-                return true;
-            }
-        }
-        false
+        self.cards.iter().any(|card| card.keyword == keyword)
     }
 
     fn len(&self) -> usize {
