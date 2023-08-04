@@ -1,3 +1,4 @@
 mod header;
 mod image;
-mod aux;
+mod utils;
+mod hdulist;

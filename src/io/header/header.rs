@@ -104,11 +104,11 @@ impl Header {
         }
     }
 
-    pub fn read_from_file(&mut self, f: &mut File) -> std::io::Result<()>{
+    pub fn read_from_file(&mut self, file: &mut File) -> std::io::Result<()>{
 
         'outer: loop {
             let mut buffer= [0; 2880];
-            let n = f.read(&mut buffer[..])?;
+            let n = file.read(&mut buffer[..])?;
             let mut last_card : Option<Card> = None;
 
             for card in buffer.chunks(80) {
@@ -147,7 +147,7 @@ impl Header {
         Ok(())
     } // read_from_buffer
 
-    pub fn write_to<W: Write>(&self, writer: &mut W) -> std::io::Result<()> {
+    pub fn write_to_buffer<W: Write>(&self, writer: &mut W) -> std::io::Result<()> {
         let mut bytes_count = 0;
         for card in &self.cards {
             card.write_to(writer, &mut bytes_count)?;
