@@ -1,2 +1,8 @@
 /target
 dev
+
+output.fits
+outputhead.fits
+output.fits
+
+testdata/.ipynb_checkpoints/Untitled-checkpoint.ipynb

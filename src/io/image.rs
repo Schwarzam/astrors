@@ -9,7 +9,7 @@ use byteorder::{ByteOrder, NativeEndian};
 
 use std::io::{Write, BufWriter};
 
-use crate::io::aux::{
+use crate::io::utils::{
     get_shape,
     pre_bytes_to_f64_vec,
     pre_bytes_to_f32_vec,
@@ -17,7 +17,7 @@ use crate::io::aux::{
     pre_bytes_to_i16_vec,
     pre_bytes_to_i32_vec, 
     vec_to_ndarray, 
-    DataType
+    nbytes_from_bitpix
 };
 use ndarray::ArrayD;
 
@@ -65,9 +65,7 @@ impl FitsParser {
         let shape = get_shape(header)?;
 
         // Get data type from BITPIX
-        let dtype = DataType::from_bitpix(bitpix).unwrap();
-        let dtype_bytes = dtype.nbytes();
-        // println!("nbytes: {:?}", nbytes); 
+        let dtype_bytes = nbytes_from_bitpix(bitpix);
 
         let total_bytes = shape.iter().fold(1, |acc, x| acc * x) * dtype_bytes;
         let mut databuf = vec![0; total_bytes]; 
@@ -218,7 +216,6 @@ impl FitsParser {
         }
         writer.flush()
     }
-
 }
 
 #[test]
@@ -247,13 +244,9 @@ fn read_image_test() -> std::io::Result<()>{
     file.flush()?;
 
     let mut data = crate::io::image::FitsParser::read_from_buffer(&mut f, &mut header)?;
-
-    
-
     println!("Data: {:?}", data);
-    
 
-    if let FitsData::I32(ndarray) = &data {
+    if let FitsData::F32(ndarray) = &data {
         println!("Data Mean: {:?}", ndarray.mean());
     }
     FitsParser::ndarray_to_buffer(data, &mut file);

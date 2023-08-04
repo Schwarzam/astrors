@@ -5,52 +5,16 @@ use std::io::Read;
 use byteorder::{BigEndian, ByteOrder};
 
 use crate::io::header::Header;
-
-#[derive(Debug, PartialEq)]
-pub enum DataType { // Decided to leave the Rust native types for better understanting.
-    u8,
-    i16,
-    i32,
-    f32,
-    f64,
-}
-
 use std::fmt;
 
-impl fmt::Display for DataType {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match *self {
-            DataType::u8 => write!(f, "U8"),
-            DataType::i16 => write!(f, "I16"),
-            DataType::i32 => write!(f, "I32"),
-            DataType::f32 => write!(f, "F32"),
-            DataType::f64 => write!(f, "F64"),
-        }
-    }
-}
-
-impl Eq for DataType {}
-
-impl DataType {
-    pub fn nbytes(&self) -> usize {
-        match self {
-            DataType::u8 => 1,    // 8 bits = 1 byte
-            DataType::i16 => 2,   // 16 bits = 2 bytes
-            DataType::i32 => 4,   // 32 bits = 4 bytes
-            DataType::f32 => 4, // 32 bits = 4 bytes
-            DataType::f64 => 8, // 64 bits = 8 bytes
-        }
-    }
-
-    pub fn from_bitpix(bitpix: i32) -> Option<DataType> {
-        match bitpix {
-            8 => Some(DataType::u8),
-            16 => Some(DataType::i16),
-            32 => Some(DataType::i32),
-            -32 => Some(DataType::f32),
-            -64 => Some(DataType::f64),
-            _ => panic!("Unknown bitpix value"),
-        }
+pub fn nbytes_from_bitpix(bitpix : i32) -> usize {
+    match bitpix {
+        8 => 1,
+        16 => 2,
+        32 => 4,
+        -32 => 4,
+        -64 => 8,
+        _ => panic!("Unknown bitpix value"),
     }
 }
 

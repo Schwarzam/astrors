@@ -20,7 +20,7 @@ lazy_static! {
 mod io {
     pub mod header;
     pub mod image;
-    pub mod aux;
+    pub mod utils;
 }
 
 
