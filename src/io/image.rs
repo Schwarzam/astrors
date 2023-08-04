@@ -221,7 +221,7 @@ impl ImageParser {
 #[test]
 fn read_image_test() -> std::io::Result<()>{
     // crate::fits_io::read_file();
-    use crate::{GLOBAL_FILE_NAME, WRITE_FILE};
+    use crate::*;
 
     use std::time::Instant;
     let now = Instant::now();
@@ -230,11 +230,11 @@ fn read_image_test() -> std::io::Result<()>{
 
     use std::fs::File;
     // let mut f = File::open("./testdata/test.fits")?
-    let mut f: File = File::open(GLOBAL_FILE_NAME.as_str())?;
+    let mut f: File = File::open(GLOBAL_FILE_NAME2.as_str())?;
 
     let mut header = crate::io::header::Header::new();
     header.read_from_file(&mut f)?;
-    header.pretty_print();
+    //header.pretty_print();
 
     use std::io::Write;
     // let mut file = File::create(WRITE_FILE.as_str())?;
@@ -244,7 +244,7 @@ fn read_image_test() -> std::io::Result<()>{
     file.flush()?;
 
     let mut data = crate::io::image::ImageParser::read_from_buffer(&mut f, &mut header)?;
-    println!("Data: {:?}", data);
+    //println!("Data: {:?}", data);
 
     if let ImageData::F32(ndarray) = &data {
         println!("Data Mean: {:?}", ndarray.mean());
@@ -252,7 +252,7 @@ fn read_image_test() -> std::io::Result<()>{
     ImageParser::ndarray_to_buffer(&data, &mut file);
     
     use rayon::prelude::*;
-    println!("{} threads", rayon::current_num_threads());
+    //println!("{} threads", rayon::current_num_threads());
 
     let elapsed = now.elapsed();
     println!("Elapsed: {:.2?}", elapsed);

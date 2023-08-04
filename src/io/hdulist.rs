@@ -20,6 +20,7 @@ impl HDUList {
 
         let mut header = crate::io::header::Header::new();
         header.read_from_file(&mut file)?;
+
         Ok(hdulist)
     }
 
@@ -114,7 +115,11 @@ impl HDU {
     }
 }
 
-#[cfg(test)]
+#[test]
 fn open_fits(){
+    use crate::*;
+
+    let hdus = HDUList::fromfile(GLOBAL_FILE_NAME2.clone());
+
 
 }
