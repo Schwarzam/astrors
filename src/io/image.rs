@@ -21,76 +21,44 @@ use crate::io::aux::{
 };
 use ndarray::ArrayD;
 
-pub struct Data {
-    u8: Option<ArrayD<u8>>,
-    i16: Option<ArrayD<i16>>,
-    i32: Option<ArrayD<i32>>,
-    f32: Option<ArrayD<f32>>,
-    f64: Option<ArrayD<f64>>,
-    dtype: DataType,
+pub enum FitsData {
+    U8(ArrayD<u8>),
+    I16(ArrayD<i16>),
+    I32(ArrayD<i32>),
+    F32(ArrayD<f32>),
+    F64(ArrayD<f64>),
 }
 
 use std::fmt;
-impl fmt::Debug for Data {
-    
+
+impl fmt::Debug for FitsData {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self.dtype {
-            DataType::u8 => {
-                write!(f, "Data: {:?}, dtype {:?}", self.u8, self.dtype)
-            }
-            DataType::i16 => {
-                write!(f, "Data: {:?}, dtype {}", self.i16, self.dtype)
-            }
-            DataType::i32 => {
-                write!(f, "Data: {:?}, dtype {}", self.i32, self.dtype)
-            }
-            DataType::f32 => {
-                write!(f, "Data: {:?}, dtype {}", self.f32, self.dtype)
-            }
-            DataType::f64 => {
-                write!(f, "Data: {:?}, dtype {}", self.f64, self.dtype)
+        match self {
+            FitsData::U8(array) => {
+                write!(f, "FitsData::U8({:?})", array)
+            },
+            FitsData::I16(array) => {
+                write!(f, "FitsData::I16({:?})", array)
+            },
+            FitsData::I32(array) => {
+                write!(f, "FitsData::I32({:?})", array)
+            },
+            FitsData::F32(array) => {
+                write!(f, "FitsData::F32({:?})", array)
+            },
+            FitsData::F64(array) => {
+                write!(f, "FitsData::F64({:?})", array)
+            },
+            _ => {
+                panic!("Not implemented");
             }
         }
     }
 }
+pub struct FitsParser;
 
-
-impl Data {
-    pub fn new() -> Data {
-        Data {
-            u8: None,
-            i16: None,
-            i32: None,
-            f32: None,
-            f64: None,
-            dtype: DataType::u8,
-        }
-    }
-    pub fn pretty_print(&self) {
-        match self.dtype {
-            DataType::u8 => {
-                println!("Data: {:?}", self.u8);
-            },
-            DataType::i16 => {
-                println!("Data: {:?}", self.i16);
-            },
-            DataType::i32 => {
-                println!("Data: {:?}", self.i32);
-            },
-            DataType::f32 => {
-                println!("Data: {:?}", self.f32);
-            },
-            DataType::f64 => {
-                println!("Data: {:?}", self.f64);
-            },
-        }
-        println!("Data type: {:?}", self.dtype);
-    }
-}
-
-impl Data {
-
-    pub fn read_from_buffer(f: &mut File, header: &mut Header) -> Result<Data, std::io::Error>  {
+impl FitsParser {
+    pub fn read_from_buffer(f: &mut File, header: &mut Header) -> Result<FitsData, std::io::Error>  {
         let _naxis: usize = header.parse_header_value("NAXIS")?;
     
         let bitpix : i32 = header.parse_header_value("BITPIX")?;
@@ -113,70 +81,45 @@ impl Data {
             // println!("Padding: {:?}", padding.len());
         }
 
-        Data::image_buffer_to_ndarray(databuf, shape, dtype) 
+        FitsParser::image_buffer_to_ndarray(databuf, shape, bitpix) 
     }
 
-    pub fn image_buffer_to_ndarray(databuf: Vec<u8>, shape: Vec<usize>, dtype: DataType) -> Result<Data, std::io::Error>  {
-        match dtype {
-            DataType::u8 => {
+
+    pub fn image_buffer_to_ndarray(databuf: Vec<u8>, shape: Vec<usize>, bitpix: i32) -> Result<FitsData, std::io::Error>  {
+        match bitpix {
+            8 => {
                 let mut vect: Vec<u8> = vec![0; databuf.len() / 1];
                 pre_bytes_to_u8_vec(databuf, &mut vect);
-
                 let ndarray = vec_to_ndarray(vect, shape);
-                
-                let mut data = Data::new();
-                data.u8 = Some(ndarray);      
-                data.dtype = DataType::u8;
-
-
+                let mut data: FitsData = FitsData::U8(ndarray);
                 Ok(data)
             },
-            DataType::i16 => {
+            16 => {
                 let mut vect: Vec<i16> = vec![0; databuf.len() / 2];
                 pre_bytes_to_i16_vec(databuf, &mut vect);
-                
                 let ndarray = vec_to_ndarray(vect, shape);
-
-                let mut data = Data::new();
-                data.i16 = Some(ndarray);      
-                data.dtype = DataType::i16;
-
+                let mut data = FitsData::I16(ndarray);
                 Ok(data)
             },
-            DataType::i32 => {
+            32 => {
                 let mut vect: Vec<i32> = vec![0; databuf.len() / 4];
                 pre_bytes_to_i32_vec(databuf, &mut vect);
-                
                 let ndarray = vec_to_ndarray(vect, shape);
-
-                let mut data = Data::new();
-                data.i32 = Some(ndarray);      
-                data.dtype = DataType::i32;
-
+                let mut data = FitsData::I32(ndarray);
                 Ok(data)
             },
-            DataType::f32 => {
+            -32 => {
                 let mut vect: Vec<f32> = vec![0.0; databuf.len() / 4];
                 pre_bytes_to_f32_vec(databuf, &mut vect);
-
                 let ndarray = vec_to_ndarray(vect, shape);
-                
-                let mut data = Data::new();
-                data.f32 = Some(ndarray);      
-                data.dtype = DataType::f32;
-
+                let mut data = FitsData::F32(ndarray);
                 Ok(data)
             },
-                DataType::f64 => {
+            -64 => {
                 let mut vect: Vec<f64> = vec![0.0; databuf.len() / 8];
                 pre_bytes_to_f64_vec(databuf, &mut vect);
-
                 let ndarray = vec_to_ndarray(vect, shape);
-
-                let mut data = Data::new();
-                data.f64 = Some(ndarray);      
-                data.dtype = DataType::f64;
-
+                let mut data = FitsData::F64(ndarray);
                 Ok(data)
             },
             _ => {
@@ -185,26 +128,26 @@ impl Data {
         }
     }
 
-    pub fn ndarray_to_buffer_parallel(&self) -> Vec<u8> {
-        match self.dtype {
-            DataType::u8 => {
-                let mut vect = self.u8.as_ref().unwrap().clone().into_raw_vec();
+    pub fn ndarray_to_buffer_parallel(data: &FitsData) -> Vec<u8> {
+        match data {
+            FitsData::U8(array) => {
+                let mut vect = array.clone().into_raw_vec();
                 vect.par_iter().flat_map(|&item| item.to_ne_bytes().to_vec()).collect::<Vec<u8>>()
             },
-            DataType::i16 => {
-                let mut vect = self.i16.as_ref().unwrap().clone().into_raw_vec();
+            FitsData::I16(array) => {
+                let mut vect = array.clone().into_raw_vec();
                 vect.par_iter().flat_map(|&item| item.to_ne_bytes().to_vec()).collect::<Vec<u8>>()
             },
-            DataType::i32 => {
-                let mut vect = self.i32.as_ref().unwrap().clone().into_raw_vec();
+            FitsData::I32(array) => {
+                let mut vect = array.clone().into_raw_vec();
                 vect.par_iter().flat_map(|&item| item.to_ne_bytes().to_vec()).collect::<Vec<u8>>()
             },
-            DataType::f32 => {
-                let mut vect = self.f32.as_ref().unwrap().clone().into_raw_vec();
+            FitsData::F32(array) => {
+                let mut vect = array.clone().into_raw_vec();
                 vect.par_iter().flat_map(|&item| item.to_ne_bytes().to_vec()).collect::<Vec<u8>>()
             },
-            DataType::f64 => {
-                let mut vect = self.f64.as_ref().unwrap().clone().into_raw_vec();
+            FitsData::F64(array) => {
+                let mut vect = array.clone().into_raw_vec();
                 vect.par_iter().flat_map(|&item| item.to_ne_bytes().to_vec()).collect::<Vec<u8>>()
             },
             _ => {
@@ -213,8 +156,8 @@ impl Data {
         }
     }
 
-    pub fn write_to_buffer(&self, mut writer: impl std::io::Write) -> std::io::Result<()> {
-        let mut buffer = self.ndarray_to_buffer_parallel();
+    pub fn write_to_buffer(data : &FitsData, mut writer: impl std::io::Write) -> std::io::Result<()> {
+        let mut buffer = FitsParser::ndarray_to_buffer_parallel(&data);
         let remainder = buffer.len() % 2880;
         if remainder != 0 {
             let padding = vec![0; 2880 - remainder];
@@ -224,56 +167,45 @@ impl Data {
         Ok(())
     }
 
-    pub fn ndarray_to_buffer<W: Write>(&self, mut writer: W) -> std::io::Result<()> {
+    pub fn ndarray_to_buffer<W: Write>(data: FitsData, mut writer: W) -> std::io::Result<()> {
         let mut writer = BufWriter::new(writer);
         let mut bytes_written = 0;
-        match self.dtype {
-            DataType::u8 => {
-                if let Some(ndarray) = &self.u8 {
-                    for &item in ndarray.iter() {
-                        let bytes: [u8; 1] = item.to_be_bytes();
-                        writer.write_all(&bytes)?;
-                        bytes_written += bytes.len();
-                    }
+        match data {
+            FitsData::U8(ndarray) => {
+                for &item in ndarray.iter() {
+                    let bytes: [u8; 1] = item.to_be_bytes();
+                    writer.write_all(&bytes)?;
+                    bytes_written += bytes.len();
                 }
             },
-            DataType::i16 => {
-                if let Some(ndarray) = &self.i16 {
-                    for &item in ndarray.iter() {
-                        let bytes: [u8; 2] = item.to_be_bytes();
-                        writer.write_all(&bytes)?;
-                        bytes_written += bytes.len();
-                    }
+            FitsData::I16(ndarray) => {
+                for &item in ndarray.iter() {
+                    let bytes: [u8; 2] = item.to_be_bytes();
+                    writer.write_all(&bytes)?;
+                    bytes_written += bytes.len();
                 }
             },
-            DataType::i32 => {
-                if let Some(ndarray) = &self.i32 {
-                    for &item in ndarray.iter() {
-                        let bytes: [u8; 4] = item.to_be_bytes();
-                        writer.write_all(&bytes)?;
-                        bytes_written += bytes.len();
-                    }
+            FitsData::I32(ndarray) => {
+                for &item in ndarray.iter() {
+                    let bytes: [u8; 4] = item.to_be_bytes();
+                    writer.write_all(&bytes)?;
+                    bytes_written += bytes.len();
                 }
             },
-            DataType::f32 => {
-                if let Some(ndarray) = &self.f32 {
-                    for &item in ndarray.iter() {
-                        let bytes: [u8; 4] = f32::to_be_bytes(item);
-                        writer.write_all(&bytes)?;
-                        bytes_written += bytes.len();
-                    }
+            FitsData::F32(ndarray) => {
+                for &item in ndarray.iter() {
+                    let bytes: [u8; 4] = f32::to_be_bytes(item);
+                    writer.write_all(&bytes)?;
+                    bytes_written += bytes.len();
                 }
             },
-            DataType::f64 => {
-                if let Some(ndarray) = &self.f64 {
-                    for &item in ndarray.iter() {
-                        let bytes: [u8; 8] = f64::to_be_bytes(item);
-                        writer.write_all(&bytes)?;
-                        bytes_written += bytes.len();
-                    }
+            FitsData::F64(ndarray) => {
+                for &item in ndarray.iter() {
+                    let bytes: [u8; 8] = f64::to_be_bytes(item);
+                    writer.write_all(&bytes)?;
+                    bytes_written += bytes.len();
                 }
             },
-            
             _ => {
                 panic!("Not implemented");
             }
@@ -314,18 +246,17 @@ fn read_image_test() -> std::io::Result<()>{
     
     file.flush()?;
 
-    let mut data = crate::io::image::Data::read_from_buffer(&mut f, &mut header)?;
+    let mut data = crate::io::image::FitsParser::read_from_buffer(&mut f, &mut header)?;
 
     
 
     println!("Data: {:?}", data);
     
 
-    if let Some(ndarray) = &data.f32 {
+    if let FitsData::I32(ndarray) = &data {
         println!("Data Mean: {:?}", ndarray.mean());
     }
-    data.f32 = None;
-    data.ndarray_to_buffer(&mut file);
+    FitsParser::ndarray_to_buffer(data, &mut file);
     
     use rayon::prelude::*;
     println!("{} threads", rayon::current_num_threads());
