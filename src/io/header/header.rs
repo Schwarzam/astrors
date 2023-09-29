@@ -100,7 +100,17 @@ impl Header {
 
     pub fn pretty_print(&self) {
         for card in &self.cards {
+
             println!("{} = {} / {}", card.keyword, card.value.as_ref().unwrap_or(&String::new()), card.comment.as_ref().unwrap_or(&String::new()));
+        }
+    }
+
+    pub fn pretty_print_advanced(&self) {
+        for card in &self.cards {
+            println!("----------------------------------------");
+            println!("Keyword: {}", card.keyword);
+            println!("Value: {}", card.value.as_ref().unwrap_or(&String::new()));
+            println!("Comment: {}", card.comment.as_ref().unwrap_or(&String::new()));
         }
     }
 

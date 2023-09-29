@@ -29,6 +29,10 @@ pub enum ImageData {
     F64(ArrayD<f64>),
 }
 
+pub struct ImData<T> {
+    pub data : ArrayD<T>
+}
+
 use std::fmt;
 
 impl fmt::Debug for ImageData {
@@ -109,8 +113,12 @@ impl ImageParser {
             -32 => {
                 let mut vect: Vec<f32> = vec![0.0; databuf.len() / 4];
                 pre_bytes_to_f32_vec(databuf, &mut vect);
-                let ndarray = vec_to_ndarray(vect, shape);
-                let mut data = ImageData::F32(ndarray);
+                let ndarray: ArrayBase<ndarray::OwnedRepr<f32>, ndarray::Dim<ndarray::IxDynImpl>> = vec_to_ndarray(vect, shape);
+                let mut data = ImageData::F32(ndarray.clone());
+
+                ImData {
+                    data: ndarray
+                };
                 Ok(data)
             },
             -64 => {
@@ -230,11 +238,12 @@ fn read_image_test() -> std::io::Result<()>{
 
     use std::fs::File;
     // let mut f = File::open("./testdata/test.fits")?
-    let mut f: File = File::open(GLOBAL_FILE_NAME2.as_str())?;
+    let mut f: File = File::open(GLOBAL_FILE_NAME.as_str())?;
 
     let mut header = crate::io::header::Header::new();
     header.read_from_file(&mut f)?;
     //header.pretty_print();
+    //header.pretty_print_advanced();
 
     use std::io::Write;
     // let mut file = File::create(WRITE_FILE.as_str())?;
@@ -243,19 +252,19 @@ fn read_image_test() -> std::io::Result<()>{
     
     file.flush()?;
 
-    let mut data = crate::io::image::ImageParser::read_from_buffer(&mut f, &mut header)?;
-    //println!("Data: {:?}", data);
+    // let mut data = crate::io::image::ImageParser::read_from_buffer(&mut f, &mut header)?;
+    // //println!("Data: {:?}", data);
 
-    if let ImageData::F32(ndarray) = &data {
-        println!("Data Mean: {:?}", ndarray.mean());
-    }
-    ImageParser::ndarray_to_buffer(&data, &mut file);
+    // if let ImageData::F32(ndarray) = &data {
+    //     println!("Data Mean: {:?}", ndarray.mean());
+    // }
+    // ImageParser::ndarray_to_buffer(&data, &mut file);
     
-    use rayon::prelude::*;
-    //println!("{} threads", rayon::current_num_threads());
+    // use rayon::prelude::*;
+    // //println!("{} threads", rayon::current_num_threads());
 
-    let elapsed = now.elapsed();
-    println!("Elapsed: {:.2?}", elapsed);
+    // let elapsed = now.elapsed();
+    // println!("Elapsed: {:.2?}", elapsed);
 
     Ok(())
 }

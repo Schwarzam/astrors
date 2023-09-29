@@ -271,6 +271,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "rastronomy"
+version = "0.1.0"
+dependencies = [
+ "byteorder",
+ "cc",
+ "lazy_static",
+ "memmap",
+ "ndarray",
+ "ndarray-stats",
+ "rayon",
+]
+
+[[package]]
 name = "rawpointer"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -296,19 +309,6 @@ dependencies = [
  "crossbeam-deque",
  "crossbeam-utils",
  "num_cpus",
-]
-
-[[package]]
-name = "rust-astro"
-version = "0.1.0"
-dependencies = [
- "byteorder",
- "cc",
- "lazy_static",
- "memmap",
- "ndarray",
- "ndarray-stats",
- "rayon",
 ]
 
 [[package]]

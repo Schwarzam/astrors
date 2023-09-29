@@ -1,7 +1,10 @@
 [package]
-name = "rust-astro"
+name = "rastronomy"
 version = "0.1.0"
 edition = "2021"
+description = "Astronomy package to deal with FITS and WCS, in super early stages of development!"
+
+
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

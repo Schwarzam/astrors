@@ -26,10 +26,8 @@ lazy_static! {
 }
 
 mod io {
+    pub mod hdulist;
     pub mod header;
     pub mod image;
     pub mod utils;
-    pub mod hdulist;
 }
-
-
