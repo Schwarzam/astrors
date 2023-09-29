@@ -8,6 +8,8 @@ license = "MIT" # The license your package is under
 
 readme = "README.md"
 
+description = "Astronomical package to deal with FITS (compressed also) and WCS, still in development."
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
