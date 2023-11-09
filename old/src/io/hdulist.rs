@@ -18,7 +18,7 @@ impl HDUList {
         let hdulist = HDUList::new();
         let mut file: File = File::open(&filepath)?;
 
-        let mut header = crate::io::header::Header::new();
+        let mut header: Header = crate::io::header::Header::new();
         header.read_from_file(&mut file)?;
 
         Ok(hdulist)
@@ -34,6 +34,10 @@ impl HDUList {
         }
         Ok(())
     }
+}
+
+enum PrimaryHDU {
+    todo()   
 }
 
 enum TableData {
@@ -71,6 +75,25 @@ impl Data {
         }
         Ok(())
     }
+
+    pub fn read_from_buffer(&mut self, mut reader: impl std::io::Read) -> std::io::Result<()> {
+        match self {
+            Data::None => {
+                todo!()
+            },
+            Data::ImageData(image_data) => {
+                ImageParser::buffer_to_ndarray(&mut reader, image_data);
+            },
+            Data::TableData(table_data) => {
+                todo!()
+            },
+            Data::BinTableData(bin_table_data) => {
+                todo!()
+            }
+        }
+        Ok(())
+    }
+    
 }
 
 
