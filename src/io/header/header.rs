@@ -165,6 +165,8 @@ impl Header {
         let mut end_string = "END".to_string();
         end_string.push_str(&" ".repeat(80 - end_string.len()));  // Pad the END card with spaces
         bytes_count += 80;
+        writer.write_all(end_string.as_bytes())?;  // Write the END card
+        
         pad_buffer_to_fits_block(writer, bytes_count as usize)?;
         Ok(())
     }
