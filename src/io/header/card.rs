@@ -22,7 +22,7 @@ pub enum CardValue{
 }
 
 impl CardValue {
-    fn as_int(&self) -> Option<i64> {
+    pub fn as_int(&self) -> Option<i64> {
         if let CardValue::INT(value) = self {
             Some(*value)
         } else {
@@ -30,7 +30,7 @@ impl CardValue {
         }
     }
 
-    fn as_float(&self) -> Option<f64> {
+    pub fn as_float(&self) -> Option<f64> {
         if let CardValue::FLOAT(value) = self {
             Some(*value)
         } else {
@@ -38,7 +38,7 @@ impl CardValue {
         }
     }
 
-    fn as_bool(&self) -> Option<bool> {
+    pub fn as_bool(&self) -> Option<bool> {
         if let CardValue::LOGICAL(value) = self {
             Some(*value)
         } else {

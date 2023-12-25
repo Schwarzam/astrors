@@ -122,7 +122,6 @@ impl Header {
                     break 'outer;
                 }
                 
-                // println!("Adding card: {:?}", last_card.as_ref().clone());
                 if !card_str.contains("CONTINUE  ") && last_card.keyword != "" {
                     self.add_card(last_card);
                     last_card = Card::default();
