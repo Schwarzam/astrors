@@ -1,9 +1,9 @@
 use std::fs::File;
 use std::io::Read;
 use std::io::{Error, ErrorKind};
-use std::ops::Index;
+use std::ops::{Index, IndexMut};
 
-use crate::io::header::card::Card;
+use crate::io::header::card::{Card, CardValue};
 
 use std::io::Write;
 pub struct Header {
@@ -23,6 +23,12 @@ impl Index<&str> for Header {
 
 }
 
+impl IndexMut<&str> for Header {
+    fn index_mut(&mut self, card_name: &str) -> &mut Card {
+        self.get_mut_card(card_name).expect("Card not found")
+    }
+}
+
 impl Header {
     pub fn new() -> Self {
         Header {
@@ -30,78 +36,65 @@ impl Header {
         }
     }
 
-    fn add_card(&mut self, card: Option<Card>) {
-        if let Some(card) = card {
-            self.cards.push(card);
-        }
+    pub fn add_card(&mut self, card: Card) {
+        self.cards.push(card);
     }
 
     pub fn get_card(&self, card_name: &str) -> Option<&Card> {
-        self.cards.iter().find(|&card| card.keyword == card_name)
+        self.cards.iter().find(|card| card.keyword == card_name)
     }
 
-    pub fn get_value(&self, keyword: &str) -> Result<&str, Error> {
-        self.cards.iter().find(|card| card.keyword == keyword).map_or(
-            Err(Error::new(ErrorKind::Other, format!("{} keyword not found", keyword))),
-            |card| {
-                match &card.value {
-                    Some(value) => Ok(value),
-                    None => Err(Error::new(ErrorKind::Other, format!("{} keyword has no value", keyword))),
-                }
-            }
-        )
+    pub fn get_mut_card(&mut self, card_name: &str) -> Option<&mut Card> {
+        self.cards.iter_mut().find(|card| card.keyword == card_name)
     }
 
-    pub fn parse_header_value<T: std::str::FromStr>(&self, keyword: &str) -> Result<T, std::io::Error> {
-        let value_str = self.get_value(keyword)?;
-        value_str.parse::<T>().map_err(|_| {
-            let err_msg = format!("Failed to parse {} as {}", keyword, std::any::type_name::<T>());
-            std::io::Error::new(std::io::ErrorKind::Other, err_msg)
-        })
-    }
+    // pub fn get_value(&self, keyword: &str) -> Result<&str, Error> {
+    //     self.cards.iter().find(|card| card.keyword == keyword).map_or(
+    //         Err(Error::new(ErrorKind::Other, format!("{} keyword not found", keyword))),
+    //         |card| {
+    //             match &card.value {
+    //                 Some(value) => Ok(value.unwrap().to_string()),
+    //                 None => Err(Error::new(ErrorKind::Other, format!("{} keyword has no value", keyword))),
+    //             }
+    //         }
+    //     )
+    // }
 
-    fn get_card_mut(&mut self, keyword: &str) -> Option<&mut Card> {
-        for card in &mut self.cards {
-            if card.keyword == keyword {
-                return Some(card);
-            }
-        }
+    // pub fn parse_header_value<T: std::str::FromStr>(&self, keyword: &str) -> Result<T, std::io::Error> {
+    //     let value_str = self.get_value(keyword)?;
+    //     value_str.parse::<T>().map_err(|_| {
+    //         let err_msg = format!("Failed to parse {} as {}", keyword, std::any::type_name::<T>());
+    //         std::io::Error::new(std::io::ErrorKind::Other, err_msg)
+    //     })
+    // }
 
-        None
-    }
-
-    fn remove_card(&mut self, keyword: &str) -> Option<Card> {
+    pub fn remove(&mut self, keyword: &str) -> Option<Card> {
         self.cards.iter().position(|card| card.keyword == keyword).map(|idx| self.cards.remove(idx))
     }
 
-    fn contains(&self, keyword: &str) -> bool {
-        self.cards.iter().any(|card| card.keyword == keyword)
-    }
-
-    fn len(&self) -> usize {
+    pub fn len(&self) -> usize {
         self.cards.len()
     }
 
-    fn is_empty(&self) -> bool {
+    pub fn is_empty(&self) -> bool {
         self.cards.is_empty()
     }
 
-    fn clear(&mut self) {
+    pub fn clear(&mut self) {
         self.cards.clear();
     }
 
-    fn iter(&self) -> std::slice::Iter<Card> {
+    pub fn iter(&self) -> std::slice::Iter<Card> {
         self.cards.iter()
     }
 
-    fn iter_mut(&mut self) -> std::slice::IterMut<Card> {
+    pub fn iter_mut(&mut self) -> std::slice::IterMut<Card> {
         self.cards.iter_mut()
     }
 
     pub fn pretty_print(&self) {
         for card in &self.cards {
-
-            println!("{} = {} / {}", card.keyword, card.value.as_ref().unwrap_or(&String::new()), card.comment.as_ref().unwrap_or(&String::new()));
+            println!("{} = {} / {}", card.keyword, card.value.to_string(), card.comment.as_ref().unwrap_or(&String::new()));
         }
     }
 
@@ -109,17 +102,16 @@ impl Header {
         for card in &self.cards {
             println!("----------------------------------------");
             println!("Keyword: {}", card.keyword);
-            println!("Value: {}", card.value.as_ref().unwrap_or(&String::new()));
+            println!("Value: {}", card.value.to_string());
             println!("Comment: {}", card.comment.as_ref().unwrap_or(&String::new()));
         }
     }
 
     pub fn read_from_file(&mut self, file: &mut File) -> std::io::Result<()>{
-
         'outer: loop {
             let mut buffer= [0; 2880];
             let n = file.read(&mut buffer[..])?;
-            let mut last_card : Option<Card> = None;
+            let mut last_card : Card = Card::default();
             
             let mut counter = 0;
             for card in buffer.chunks(80) {
@@ -131,18 +123,17 @@ impl Header {
                 }
                 
                 // println!("Adding card: {:?}", last_card.as_ref().clone());
-                if last_card.is_some() && !card_str.contains("CONTINUE  ") {
-                    
+                if !card_str.contains("CONTINUE  ") && last_card.keyword != "" {
                     self.add_card(last_card);
-                    last_card = None;
+                    last_card = Card::default();
                 }
                 
                 if card_str.contains("CONTINUE  ") {
-                    if last_card.is_none() {
+                    if last_card.value == CardValue::EMPTY {
                         return Err(Error::new(ErrorKind::Other, "CONTINUE card without previous card"));
                     }
                     
-                    let value = last_card.as_ref().unwrap().value_ref();
+                    let value = last_card.value.to_string();
                     if value.trim().ends_with("&"){
                         Card::continue_card(&mut last_card, card_str);
                     }
