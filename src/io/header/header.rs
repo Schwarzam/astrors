@@ -4,6 +4,7 @@ use std::io::{Error, ErrorKind};
 use std::ops::{Index, IndexMut};
 
 use crate::io::header::card::{Card, CardValue};
+use crate::io::utils::pad_buffer_to_fits_block;
 
 use std::io::Write;
 pub struct Header {
@@ -110,7 +111,7 @@ impl Header {
     pub fn read_from_file(&mut self, file: &mut File) -> std::io::Result<()>{
         'outer: loop {
             let mut buffer= [0; 2880];
-            let n = file.read(&mut buffer[..])?;
+            let _ = file.read(&mut buffer[..])?;
             let mut last_card : Card = Card::default();
             
             let mut counter = 0;
@@ -164,28 +165,7 @@ impl Header {
         let mut end_string = "END".to_string();
         end_string.push_str(&" ".repeat(80 - end_string.len()));  // Pad the END card with spaces
         bytes_count += 80;
-
-        println!("bytes_count: {}", bytes_count);
-        writer.write_all(end_string.as_bytes())?;  // Write the END card
-        let remainder = bytes_count as usize % 2880;
-        if remainder != 0 {
-            let padding = " ".repeat(2880 - remainder);  // Pad to the next block
-            writer.write_all(padding.as_bytes())?;  // Write the padding
-        }
+        pad_buffer_to_fits_block(writer, bytes_count as usize)?;
         Ok(())
     }
-
-    
-
-    fn pad_to_fits_block<W: Write>(writer: &mut W, current_size: usize) -> std::io::Result<()> {
-        const FITS_BLOCK_SIZE: usize = 2880;
-        let remainder = current_size % FITS_BLOCK_SIZE;
-        if remainder > 0 {
-            let padding = FITS_BLOCK_SIZE - remainder;
-            writer.write_all(&vec![b' '; padding])
-        } else {
-            Ok(())
-        }
-    }
-
 }

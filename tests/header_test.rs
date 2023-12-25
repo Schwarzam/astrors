@@ -1,13 +1,13 @@
 extern crate rastronomy;
 mod common;
 
-use rastronomy::io::header::Header;
+use rastronomy::io::Header;
 use rastronomy::io::header::card::Card;
 use std::io::Result;
 
 #[cfg(test)]
 mod tests {
-    use std::{fs::File, io::{Error, Write}};
+    use std::{fs::File, io::Write};
     use super::*;
 
     #[test]

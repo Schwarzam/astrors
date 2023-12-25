@@ -1,8 +1,3 @@
-use std::fmt::format;
-use std::fs::File;
-use std::io::Read;
-use std::io::{Error, ErrorKind};
-
 use std::io::Write;
 
 #[derive(Debug, PartialEq)]
@@ -88,7 +83,6 @@ impl Default for Card {
 }
 
 impl Card {
-
     pub fn new(keyword: String, value: String, comment: Option<String>) -> Self {
         Card {
             keyword: keyword,
@@ -196,7 +190,7 @@ impl Card {
             return Ok(());
         }
 
-        let mut formatted_value;
+        let formatted_value;
 
         match self.value {
             CardValue::LOGICAL(_) => {
@@ -223,8 +217,8 @@ impl Card {
         }
 
         let mut keyword;
-        let mut value;
-        let mut comment;
+        let value;
+        let comment;
 
         if card_str.starts_with("COMMENT") || card_str.starts_with("HISTORY") || !card_str.contains("="){            
             let card = Card {
