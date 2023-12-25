@@ -13,7 +13,6 @@ pub struct Header {
 
 impl Index<&str> for Header {
     type Output = Card;
-
     fn index(&self, card_name: &str) -> &Self::Output {
         if let Some(card) = self.get_card(card_name){
             return card;
@@ -21,7 +20,6 @@ impl Index<&str> for Header {
             panic!("Card {} not found", card_name);
         }
     }
-
 }
 
 impl IndexMut<&str> for Header {

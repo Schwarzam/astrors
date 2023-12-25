@@ -2,9 +2,10 @@
 name = "rastronomy"
 version = "0.1.1"
 authors = ["Gustavo Schwarz gustavo.b.schwarz@gmail.com", "Vincenzo Alberice alberice.vincenzo@gmail.com", "Thales Lopes thales.t.lopes@gmail.com"] # A list of the package authors
+edition = "2021"
 
 homepage = "https://github.com/schwarzam/rastronomy"
-license = "Apache-2.0" # The license your package is under
+license = "BSD 3-Clause" # The license your package is under
 
 readme = "README.md"
 
@@ -13,11 +14,11 @@ description = "Astronomical package to deal with FITS (compressed also) and WCS,
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-rayon = "1.7.0"
+rayon = "1.8.0"
 ndarray = { version = "0.15.6", features = ["rayon"] }
 ndarray-stats = "0.5.1"
 memmap = "0.7"
-byteorder = "1.4.3"
+byteorder = "1.5.0"
 
 [build-dependencies]
 cc = "1.0.79"
