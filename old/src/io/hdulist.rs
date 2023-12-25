@@ -82,7 +82,7 @@ impl Data {
                 todo!()
             },
             Data::ImageData(image_data) => {
-                ImageParser::buffer_to_ndarray(&mut reader, image_data);
+                // ImageParser::buffer_to_ndarray(&mut reader, image_data);
             },
             Data::TableData(table_data) => {
                 todo!()

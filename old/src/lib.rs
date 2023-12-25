@@ -15,7 +15,7 @@ lazy_static! {
     static ref GLOBAL_FILE_NAME2: String = {
         // Put the file name here
         // "/Users/gustavo/Downloads/bpmask_proc_SPLUS-GAL-20180325-043054.fits".to_string()
-        "/Users/gustavo/rust-astro/testdata/WFPC2u5780205r_c0fx.fits".to_string()
+        "/Users/gustavo/rust-astro/old/testdata/WFPC2u5780205r_c0fx.fits".to_string()
         // "/Users/gustavo/Downloads/test.fits".to_string()
 
     };

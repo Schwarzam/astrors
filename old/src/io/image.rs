@@ -234,12 +234,12 @@ fn read_image_test() -> std::io::Result<()>{
 
     use std::fs::File;
     // let mut f = File::open("./testdata/test.fits")?
-    let mut f: File = File::open(GLOBAL_FILE_NAME.as_str())?;
+    let mut f: File = File::open(GLOBAL_FILE_NAME2.as_str())?;
 
     let mut header = crate::io::header::Header::new();
     header.read_from_file(&mut f)?;
     //header.pretty_print();
-    header.pretty_print_advanced();
+    // header.pretty_print_advanced();
 
     use std::io::Write;
     // let mut file = File::create(WRITE_FILE.as_str())?;
@@ -254,7 +254,7 @@ fn read_image_test() -> std::io::Result<()>{
     if let ImageData::F32(ndarray) = &data {
         println!("Data Mean: {:?}", ndarray.mean());
     }
-    ImageParser::ndarray_to_buffer(&data, &mut file);
+    // ImageParser::ndarray_to_buffer(&data, &mut file);
     
     use rayon::prelude::*;
     println!("{} threads", rayon::current_num_threads());
