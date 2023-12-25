@@ -18,7 +18,6 @@ pub enum TYPE{
     INT,
     FLOAT,
     STRING, 
-    BOOL, 
     LOGICAL
 }
 
@@ -27,8 +26,6 @@ fn check_type(s: &str) -> TYPE {
         TYPE::INT
     } else if s.parse::<f64>().is_ok() {
         TYPE::FLOAT
-    } else if s.parse::<bool>().is_ok() {
-        TYPE::BOOL
     } else if s == "T" || s == "F" {
         TYPE::LOGICAL
     } else {
@@ -167,7 +164,7 @@ impl Card {
         }
 
         let remaining = card_str.splitn(2, '=').collect::<Vec<&str>>()[1].trim();
-        if let Some(idx) = remaining.find(" / ") {
+        if let Some(idx) = remaining.find(" /") {
             // If there is a '/' character, we split the remaining string into value and comment.
             value = remaining[..idx + 1].trim().replace("'", "").to_string();
             comment = Some(remaining[idx+2..].trim().to_string());
@@ -177,7 +174,9 @@ impl Card {
             comment = None;
         };
 
-        let card_type = check_type(&value);
+        let card_type: TYPE = check_type(&value);
+
+        // println!("{} {} {:?} {:?}", keyword, value, comment, card_type);
 
         Some(
             Card { keyword: keyword, value: Some( value ), comment: comment, card_type: Some( card_type ) }
@@ -189,8 +188,6 @@ impl Card {
             let mut value;
             if card_str.starts_with("CONTINUE  "){
                 value = card_str.splitn(2, "CONTINUE  ").collect::<Vec<&str>>()[1].trim().replace("'", "").to_string();
-                println!("value = {}", value);
-
                 value = value.strip_suffix("&").unwrap_or(&value).to_string();
 
                 let mut last_value = card.get_value_clone();

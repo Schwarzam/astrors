@@ -120,7 +120,8 @@ impl Header {
             let mut buffer= [0; 2880];
             let n = file.read(&mut buffer[..])?;
             let mut last_card : Option<Card> = None;
-
+            
+            let mut counter = 0;
             for card in buffer.chunks(80) {
                 let card_str = String::from_utf8_lossy(card).trim_end().to_string();
 
@@ -128,8 +129,10 @@ impl Header {
                     self.add_card(last_card);
                     break 'outer;
                 }
-
+                
+                // println!("Adding card: {:?}", last_card.as_ref().clone());
                 if last_card.is_some() && !card_str.contains("CONTINUE  ") {
+                    
                     self.add_card(last_card);
                     last_card = None;
                 }
@@ -149,7 +152,13 @@ impl Header {
                 }
                 else {
                     last_card = Card::parse_card(card_str);
+                    
+                    if (counter) == (2880 / 80) - 1 {
+                        self.add_card(last_card);
+                        break;
+                    }
                 }
+                counter += 1;
             } // for loop chunks 80
 
         } // loop over 2880 bytes buffer 
