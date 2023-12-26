@@ -71,17 +71,18 @@ impl HDU {
                     // TODO: Implement ImageHDU
                     //let data = PrimaryHDU::read_from_file(&mut f)?;
                     //Ok(())
-                    panic!("Not implemented IMAGE HDU");
+                    Err(io::Error::new(io::ErrorKind::Other, "Not implemented IMAGE HDU"))
                 },
                 "TABLE" => {
-                    panic!("Not implemented TABLE HDU");
+                    Err(io::Error::new(io::ErrorKind::Other, "Not implemented TABLE HDU"))
                 },
                 "BINTABLE" => {
-                    panic!("Not implemented BINTABLE HDU");
+                    Err(io::Error::new(io::ErrorKind::Other, "Not implemented BINTABLE HDU"))
                 },
                 _ => {
-                    panic!("Not implemented HDU type");
+                    Err(io::Error::new(io::ErrorKind::Other, "Not implemented HDU type"))
                 }
+                
             }
         } else {
             panic!("Not implemented");

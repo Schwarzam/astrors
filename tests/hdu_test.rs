@@ -17,7 +17,7 @@ mod image_tests {
     fn read_fits() -> Result<()> {
         let testfile = common::get_testdata_path("WFPC2u57.fits");
         
-        let hdu = HDUList::fromfile(testfile.to_str().unwrap())?;
+        let hdu = HDUList::fromfile(testfile.to_str().unwrap());
         
 
         Ok(())
@@ -38,7 +38,6 @@ mod image_tests {
         
         println!("Has more data: {}", has_more_data(&mut f)?);
         //header.pretty_print_advanced();
-        
         
         //Reading the next header if more data is available
         let mut header = Header::new();
