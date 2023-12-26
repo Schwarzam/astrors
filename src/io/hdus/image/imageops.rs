@@ -58,9 +58,19 @@ impl fmt::Debug for ImageData {
         }
     }
 }
+
+pub fn calculate_image_bytes(header: &Header) -> usize {
+    let bitpix : i32 = header["BITPIX"].value.as_int().unwrap_or(0) as i32;
+    let shape = get_shape(header).unwrap();
+    let dtype_bytes = nbytes_from_bitpix(bitpix);
+    shape.iter().fold(1, |acc, x| acc * x) * dtype_bytes
+}
+
 pub struct ImageParser;
 
 impl ImageParser {
+    //TODO: Find where to implement BZERO and BSCALE
+
     pub fn read_from_buffer(f: &mut File, header: &mut Header) -> Result<ImageData, std::io::Error>  {
         let _naxis: usize = header["NAXIS"].value.as_int().unwrap_or(0) as usize;
     
@@ -84,7 +94,6 @@ impl ImageParser {
 
         ImageParser::image_buffer_to_ndarray(databuf, shape, bitpix) 
     }
-
 
     pub fn image_buffer_to_ndarray(databuf: Vec<u8>, shape: Vec<usize>, bitpix: i32) -> Result<ImageData, std::io::Error>  {
         match bitpix {
@@ -124,8 +133,8 @@ impl ImageParser {
                 Ok(data)
             },
             _ => {
-                panic!("Not implemented");
-            }
+                Err(std::io::Error::new(std::io::ErrorKind::Other, "Not implemented"))
+            },
         }
     }
 
@@ -133,23 +142,23 @@ impl ImageParser {
         match data {
             ImageData::U8(array) => {
                 let vect = array.clone().into_raw_vec();
-                vect.par_iter().flat_map(|&item| item.to_ne_bytes().to_vec()).collect::<Vec<u8>>()
+                vect.par_iter().flat_map(|&item| item.to_be_bytes().to_vec()).collect::<Vec<u8>>()
             },
             ImageData::I16(array) => {
                 let vect = array.clone().into_raw_vec();
-                vect.par_iter().flat_map(|&item| item.to_ne_bytes().to_vec()).collect::<Vec<u8>>()
+                vect.par_iter().flat_map(|&item| item.to_be_bytes().to_vec()).collect::<Vec<u8>>()
             },
             ImageData::I32(array) => {
                 let vect = array.clone().into_raw_vec();
-                vect.par_iter().flat_map(|&item| item.to_ne_bytes().to_vec()).collect::<Vec<u8>>()
+                vect.par_iter().flat_map(|&item| item.to_be_bytes().to_vec()).collect::<Vec<u8>>()
             },
             ImageData::F32(array) => {
                 let vect = array.clone().into_raw_vec();
-                vect.par_iter().flat_map(|&item| item.to_ne_bytes().to_vec()).collect::<Vec<u8>>()
+                vect.par_iter().flat_map(|&item| item.to_be_bytes().to_vec()).collect::<Vec<u8>>()
             },
             ImageData::F64(array) => {
                 let vect = array.clone().into_raw_vec();
-                vect.par_iter().flat_map(|&item| item.to_ne_bytes().to_vec()).collect::<Vec<u8>>()
+                vect.par_iter().flat_map(|&item| item.to_be_bytes().to_vec()).collect::<Vec<u8>>()
             },
         }
     }
@@ -218,45 +227,3 @@ impl ImageParser {
     }
 }
 
-// #[test]
-// fn read_image_test() -> std::io::Result<()>{
-//     // crate::fits_io::read_file();
-//     use crate::*;
-
-//     use std::time::Instant;
-//     let now = Instant::now();
-
-//     rayon::ThreadPoolBuilder::new().num_threads(8).build_global().unwrap();
-
-//     use std::fs::File;
-//     // let mut f = File::open("./testdata/test.fits")?
-//     let mut f: File = File::open(GLOBAL_FILE_NAME2.as_str())?;
-
-//     let mut header = crate::io::header::Header::new();
-//     header.read_from_file(&mut f)?;
-//     //header.pretty_print();
-//     // header.pretty_print_advanced();
-
-//     use std::io::Write;
-//     // let mut file = File::create(WRITE_FILE.as_str())?;
-//     let mut file = File::create("output.fits")?;
-//     header.write_to_buffer(&mut file)?;
-    
-//     file.flush()?;
-
-//     let mut data = crate::io::hdus::image::imageops::ImageParser::read_from_buffer(&mut f, &mut header)?;
-//     println!("Data: {:?}", data);
-
-//     if let ImageData::F32(ndarray) = &data {
-//         println!("Data Mean: {:?}", ndarray.mean());
-//     }
-//     // ImageParser::ndarray_to_buffer(&data, &mut file);
-    
-//     use rayon::prelude::*;
-//     println!("{} threads", rayon::current_num_threads());
-
-//     let elapsed = now.elapsed();
-//     println!("Elapsed: {:.2?}", elapsed);
-
-//     Ok(())
-// }

@@ -35,6 +35,10 @@ impl Header {
         }
     }
 
+    pub fn contains_key(&self, keyword: &str) -> bool {
+        self.cards.iter().any(|card| card.keyword == keyword)
+    }
+
     pub fn add_card(&mut self, card: Card) {
         self.cards.push(card);
     }
