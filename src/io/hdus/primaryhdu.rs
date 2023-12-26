@@ -34,7 +34,6 @@ impl PrimaryHDU {
         header.read_from_file(&mut f)?;
         
         for keyword in MANDATORY_KEYWORDS.iter() {
-            println!("Checking for keyword {}", keyword);
             if !header.contains_key(keyword) {
                 // TODO: Return a proper error
                 // Err(std::io::Error::new(std::io::ErrorKind::Other, "Header corrupted"));
