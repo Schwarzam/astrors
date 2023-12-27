@@ -3,7 +3,9 @@ use std::io::{self, Read, Seek, SeekFrom, Write};
 use std::fs::File;
 
 use crate::io::header::Header;
+
 use crate::io::hdus::primaryhdu::PrimaryHDU;
+use crate::io::hdus::imagehdu::ImageHDU;
 
 use crate::io::hdus::utils::has_more_data;
 
@@ -43,7 +45,7 @@ impl HDUList {
 
 pub enum HDU {
     Primary(PrimaryHDU),
-    //Image(ImageHDU),
+    Image(ImageHDU),
     //Table(TableHDU),
     //BinTable(BinTableHDU),
 }
@@ -68,10 +70,8 @@ impl HDU {
             hdu_type.retain(|c| !c.is_whitespace());
             match hdu_type.as_str() {
                 "IMAGE" => {
-                    // TODO: Implement ImageHDU
-                    //let data = PrimaryHDU::read_from_file(&mut f)?;
-                    //Ok(())
-                    Err(io::Error::new(io::ErrorKind::Other, "Not implemented IMAGE HDU"))
+                    let imagehdu = ImageHDU::read_from_file(&mut f)?;
+                    return Ok(HDU::Image(imagehdu))
                 },
                 "TABLE" => {
                     Err(io::Error::new(io::ErrorKind::Other, "Not implemented TABLE HDU"))

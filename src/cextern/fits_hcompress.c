@@ -111,23 +111,6 @@ void ffpmsg(const char *err_message){};
 
 int fits_init_randoms(void);
 
-void testando(int *a, int ny, int nx, int scale, char *output, long *nbytes,
-              int *status) {
-
-  int stat;
-  stat = htrans(a, nx, ny);
-  digitize(a, nx, ny, scale);
-
-  FFLOCK;
-  noutmax = *nbytes; /* input value is the allocated size of the array */
-  *nbytes = 0;       /* reset */
-
-  stat = encode(output, nbytes, a, nx, ny, scale);
-  FFUNLOCK;
-
-  *status = stat;
-}
-
 /* ---------------------------------------------------------------------- */
 int fits_hcompress(int *a, int ny, int nx, int scale, char *output,
                    long *nbytes, int *status) {
