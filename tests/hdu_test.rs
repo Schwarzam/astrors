@@ -3,6 +3,7 @@ mod common;
 use rastronomy::io::hdus::primaryhdu::PrimaryHDU;
 use rastronomy::io::hdus::utils::has_more_data;
 use rastronomy::io::hdulist::HDUList;
+use rastronomy::fits;
 
 use std::io::Result;
 
@@ -17,7 +18,7 @@ mod image_tests {
     fn read_fits() -> Result<()> {
         let testfile = common::get_testdata_path("WFPC2u57.fits");
         
-        let hdu = HDUList::fromfile(testfile.to_str().unwrap());
+        let hdu_list = fits::fromfile(testfile.to_str().unwrap());
         
 
         Ok(())

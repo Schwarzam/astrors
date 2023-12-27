@@ -16,13 +16,27 @@ pub struct HDUList {
 }
 
 
+/// Represents a list of Header Data Units (HDUs).
+/// 
+/// An HDUList is a collection of HDUs, where each HDU contains data and metadata.
+/// It provides methods for creating a new HDUList, reading from a file, and adding HDUs to the list.
 impl HDUList {
+    /// Creates a new empty HDUList.
     pub fn new() -> Self {
         HDUList {
             hdus: Vec::new(),
         }
     }
 
+    /// Reads an HDUList from a file.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `filename` - The path to the file to read from.
+    /// 
+    /// # Returns
+    /// 
+    /// Returns a Result containing the HDUList if successful, or an std::io::Error if an error occurred.
     pub fn fromfile(filename : &str) -> Result<Self, std::io::Error> {
         let mut f = File::open(filename)?;
         let mut hdulist = HDUList::new();
@@ -36,11 +50,14 @@ impl HDUList {
         Ok(hdulist)
     }
 
+    /// Adds an HDU to the HDUList.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `hdu` - The HDU to add to the list.
     pub fn add_hdu(&mut self, hdu: HDU) {
         self.hdus.push(hdu);
     }
-
-    
 }
 
 pub enum HDU {
