@@ -52,9 +52,6 @@ impl fmt::Debug for ImageData {
             ImageData::F64(array) => {
                 write!(f, "FitsData::F64({:?})", array)
             },
-            _ => {
-                panic!("Not implemented");
-            }
         }
     }
 }
@@ -212,9 +209,6 @@ impl ImageParser {
                     writer.write_all(&bytes)?;
                     bytes_written += bytes.len();
                 }
-            },
-            _ => {
-                panic!("Not implemented");
             }
         }
         let remainder = bytes_written % 2880;

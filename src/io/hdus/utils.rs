@@ -1,4 +1,4 @@
-use std::io::{self, Read, Seek, SeekFrom, Write};
+use std::io::{self, Read, Seek, SeekFrom};
 use std::fs::File;
 
 pub fn has_more_data(file: &mut File) -> io::Result<bool> {

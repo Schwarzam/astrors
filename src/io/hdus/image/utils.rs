@@ -1,11 +1,7 @@
 use rayon::prelude::*;
 use ndarray::{ArrayD, IxDyn};
 
-use std::io::Read;
-use byteorder::{BigEndian, ByteOrder};
-
 use crate::io::header::Header;
-use std::fmt;
 
 pub fn nbytes_from_bitpix(bitpix : i32) -> usize {
     match bitpix {

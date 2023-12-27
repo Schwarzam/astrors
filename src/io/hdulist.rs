@@ -1,5 +1,5 @@
 use core::panic;
-use std::io::{self, Read, Seek, SeekFrom, Write};
+use std::io::{self, Seek, SeekFrom};
 use std::fs::File;
 
 use crate::io::header::Header;
@@ -9,7 +9,6 @@ use crate::io::hdus::imagehdu::ImageHDU;
 
 use crate::io::hdus::utils::has_more_data;
 
-use super::hdus::primaryhdu;
 
 pub struct HDUList {
     pub hdus: Vec<HDU>,
