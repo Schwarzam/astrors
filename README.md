@@ -1,4 +1,4 @@
-## rastronomy 
+## astrors 
 
 [![](https://img.shields.io/crates/v/rastronomy.svg)](https://crates.io/crates/rastronomy)
 [![](https://img.shields.io/crates/d/rastronomy.svg)](https://crates.io/crates/rastronomy)
