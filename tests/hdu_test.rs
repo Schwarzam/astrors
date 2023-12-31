@@ -1,16 +1,16 @@
 mod common;
 
-use rastronomy::io::hdus::primaryhdu::PrimaryHDU;
-use rastronomy::io::hdus::utils::has_more_data;
-use rastronomy::io::hdulist::HDUList;
-use rastronomy::fits;
+use astrors::io::hdus::primaryhdu::PrimaryHDU;
+use astrors::io::hdus::utils::has_more_data;
+use astrors::io::hdulist::HDUList;
+use astrors::fits;
 
 use std::io::Result;
 
 #[cfg(test)]
 mod image_tests {
     use std::{fs::File, io::{Write, Seek}};
-    use rastronomy::io::Header;
+    use astrors::io::Header;
 
     use super::*;
 

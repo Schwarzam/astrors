@@ -1,7 +1,7 @@
 mod common;
 
-use rastronomy::io::Header;
-use rastronomy::io::header::card::Card;
+use astrors::io::Header;
+use astrors::io::header::card::Card;
 use std::io::Result;
 
 #[cfg(test)]
@@ -36,7 +36,7 @@ mod header_tests {
     #[test]
     fn header_modify_keyword() -> Result<()> {
 
-        // This test should be made after issue https://github.com/Schwarzam/rastronomy/issues/2
+        // This test should be made after issue https://github.com/Schwarzam/astrors/issues/2
         // is resolved. The test should be modified to check if the keyword is actually changed.
 
         let testfile = common::get_testdata_path("WFPC2u57.fits");

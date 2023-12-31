@@ -1,7 +1,7 @@
 mod common;
 
-use rastronomy::io::Header;
-use rastronomy::io::hdus::image::imageops::{ImageParser, ImageData};
+use astrors::io::Header;
+use astrors::io::hdus::image::imageops::{ImageParser, ImageData};
 use std::io::Result;
 
 #[cfg(test)]

@@ -1,11 +1,11 @@
 ## astrors 
 
-[![](https://img.shields.io/crates/v/rastronomy.svg)](https://crates.io/crates/rastronomy)
-[![](https://img.shields.io/crates/d/rastronomy.svg)](https://crates.io/crates/rastronomy)
+[![](https://img.shields.io/crates/v/astrors.svg)](https://crates.io/crates/astrors)
+[![](https://img.shields.io/crates/d/astrors.svg)](https://crates.io/crates/astrors)
 
-![](https://github.com/schwarzam/rastronomy/actions/workflows/build.yml/badge.svg)
-![](https://github.com/schwarzam/rastronomy/actions/workflows/codecov.yml/badge.svg)
-[![codecov](https://codecov.io/gh/Schwarzam/rastronomy/graph/badge.svg?token=WFB32324PK)](https://codecov.io/gh/Schwarzam/rastronomy)
+![](https://github.com/schwarzam/astrors/actions/workflows/build.yml/badge.svg)
+![](https://github.com/schwarzam/astrors/actions/workflows/codecov.yml/badge.svg)
+[![codecov](https://codecov.io/gh/Schwarzam/astrors/graph/badge.svg?token=WFB32324PK)](https://codecov.io/gh/Schwarzam/astrors)
 
 A package for astronomical image processing and analysis. We aim to provide a simple interface for common tasks like opening fits files, including images and tables.
 

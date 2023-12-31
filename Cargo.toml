@@ -4,7 +4,7 @@ version = "0.1.2"
 authors = ["Gustavo Schwarz gustavo.b.schwarz@gmail.com", "Vincenzo Alberice alberice.vincenzo@gmail.com", "Thales Lopes thales.t.lopes@gmail.com"] # A list of the package authors
 edition = "2021"
 
-homepage = "https://github.com/schwarzam/rastronomy"
+homepage = "https://github.com/schwarzam/astrors"
 license = "BSD-3-Clause" # The license your package is under
 
 readme = "README.md"
