@@ -62,6 +62,19 @@ impl HDUList {
         Ok(hdulist)
     }
 
+    pub fn write_to(&mut self, filename: &str) -> Result<(), std::io::Error> {
+        let mut f = File::create(filename)?;
+        for hdu in &mut self.hdus {
+            match hdu {
+                HDU::Primary(hdu) => hdu.write_to_file(&mut f)?,
+                HDU::Image(hdu) => hdu.write_to_file(&mut f)?,
+                // HDU::Table(hdu) => hdu.write_to(&mut f)?,
+                // HDU::BinTable(hdu) => hdu.write_to(&mut f)?,
+            }
+        }
+        Ok(())
+    }
+
     /// Adds an HDU to the HDUList.
     /// 
     /// # Arguments

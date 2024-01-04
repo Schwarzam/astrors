@@ -18,7 +18,11 @@ mod image_tests {
     fn read_fits() -> Result<()> {
         let testfile = common::get_testdata_path("WFPC2u57_2.fits");
         
-        let hdu_list = fits::fromfile(testfile.to_str().unwrap())?;
+        let mut hdu_list = fits::fromfile(testfile.to_str().unwrap())?;
+
+        let outfile = common::get_outtestdata_path("WFPC2u57_2_written_by_astrors.fits");
+        hdu_list.write_to(outfile.to_str().unwrap())?;
+
         println!("HDU List: {:?}", hdu_list.hdus.len());
 
         Ok(())
@@ -40,10 +44,6 @@ mod image_tests {
         println!("Has more data: {}", buffer_has_more_data(&mut f)?);
         //header.pretty_print_advanced();
         
-        //Reading the next header if more data is available
-        let mut header = Header::new();
-        
-
         Ok(())
     }
 
