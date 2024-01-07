@@ -1,5 +1,5 @@
 use std::fs::File;
-use std::io::Result;
+use std::io::{Result, Seek};
 
 use crate::io::Header;
 use crate::io::hdus::image::ImageData;
@@ -38,6 +38,20 @@ impl PrimaryHDU {
 
         let data: ImageData = ImageParser::read_from_buffer(&mut f, &mut header)?;
         Ok(Self::new(header, data))
+    }
+
+    pub fn get_end_byte_position(mut f: &mut File) -> usize {
+        let first_pos = f.seek(std::io::SeekFrom::Current(0)).unwrap();
+
+        let mut header = Header::new();
+        header.read_from_file(&mut f).unwrap();
+
+        let current = f.seek(std::io::SeekFrom::Current(0)).unwrap();
+        let image_size = ImageParser::calculate_image_bytes(&header);
+        let end = current + image_size as u64;
+
+        f.seek(std::io::SeekFrom::Start(first_pos)).unwrap();
+        end as usize
     }
 
     pub fn write_to_file(&mut self, mut f: &mut File) -> Result<()> {

@@ -98,17 +98,18 @@ impl fmt::Debug for ImageData {
     }
 }
 
-pub fn calculate_image_bytes(header: &Header) -> usize {
-    let bitpix : i32 = header["BITPIX"].value.as_int().unwrap_or(0) as i32;
-    let shape = get_shape(header).unwrap();
-    let dtype_bytes = nbytes_from_bitpix(bitpix);
-    shape.iter().fold(1, |acc, x| acc * x) * dtype_bytes
-}
+
 
 pub struct ImageParser;
 
 impl ImageParser {
     //TODO: Find where to implement BZERO and BSCALE
+    pub fn calculate_image_bytes(header: &Header) -> usize {
+        let bitpix : i32 = header["BITPIX"].value.as_int().unwrap_or(0) as i32;
+        let shape = get_shape(header).unwrap();
+        let dtype_bytes = nbytes_from_bitpix(bitpix);
+        shape.iter().fold(1, |acc, x| acc * x) * dtype_bytes
+    }
 
     pub fn read_from_buffer(f: &mut File, header: &mut Header) -> Result<ImageData, std::io::Error>  {
         let _naxis: usize = header["NAXIS"].value.as_int().unwrap_or(0) as usize;
