@@ -5,6 +5,7 @@ use crate::io::Header;
 use crate::io::hdus::image::ImageData;
 
 use crate::io::hdus::image::imageops::ImageParser;
+use crate::io::utils::pad_buffer_to_fits_block;
 
 
 const MANDATORY_KEYWORDS: [&str; 3] = [
@@ -48,8 +49,12 @@ impl PrimaryHDU {
 
         let current = f.seek(std::io::SeekFrom::Current(0)).unwrap();
         let image_size = ImageParser::calculate_image_bytes(&header);
-        let end = current + image_size as u64;
+        let mut end = current + image_size as u64;
 
+        if end % 2880 != 0{
+            end = end + 2880 - (end % 2880);
+        }
+        
         f.seek(std::io::SeekFrom::Start(first_pos)).unwrap();
         end as usize
     }
