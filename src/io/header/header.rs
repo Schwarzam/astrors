@@ -39,8 +39,8 @@ impl Header {
         self.cards.iter().any(|card| card.keyword == keyword)
     }
 
-    pub fn add_card(&mut self, card: Card) {
-        self.cards.push(card);
+    pub fn add_card(&mut self, card: &Card) {
+        self.cards.push(card.clone());
     }
 
     pub fn get_card(&self, card_name: &str) -> Option<&Card> {
@@ -109,24 +109,24 @@ impl Header {
             println!("Comment: {}", card.comment.as_ref().unwrap_or(&String::new()));
         }
     }
-
+    
+    // test
     pub fn read_from_file(&mut self, file: &mut File) -> std::io::Result<()>{
+        let mut last_card : Card = Card::default();
         'outer: loop {
             let mut buffer= [0; 2880];
             let _ = file.read(&mut buffer[..])?;
-            let mut last_card : Card = Card::default();
             
-            let mut counter = 0;
             for card in buffer.chunks(80) {
                 let card_str = String::from_utf8_lossy(card).trim_end().to_string();
 
                 if card_str == "END" {
-                    self.add_card(last_card);
+                    self.add_card(&last_card);
                     break 'outer;
                 }
                 
                 if !card_str.contains("CONTINUE  ") && last_card.keyword != "" {
-                    self.add_card(last_card);
+                    self.add_card(&last_card);
                     last_card = Card::default();
                 }
                 
@@ -145,13 +145,7 @@ impl Header {
                 }
                 else {
                     last_card = Card::parse_card(card_str);
-                    
-                    if (counter) == (2880 / 80) - 1 {
-                        self.add_card(last_card);
-                        break;
-                    }
                 }
-                counter += 1;
             } // for loop chunks 80
 
         } // loop over 2880 bytes buffer 

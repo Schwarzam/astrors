@@ -1,13 +1,13 @@
 use std::io::Write;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Card {
     pub keyword: String,
     pub value: CardValue,
     pub comment: Option<String>,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum CardValue{
     INT(i64),
     FLOAT(f64),
