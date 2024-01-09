@@ -2,16 +2,17 @@ use std::fs::File;
 use std::io::Result;
 
 use crate::io::Header;
-use crate::io::hdus::image::ImageData;
-
-use crate::io::hdus::image::imageops::ImageParser;
-
 
 const MANDATORY_KEYWORDS: [&str; 3] = [
     "XTENSION",
     "BITPIX",
     "NAXIS",
 ];
+
+pub struct ImageHDU{
+    pub header: Header,
+    pub data: None, //Should be TableData
+}
 
 pub struct ImageHDU{
     pub header: Header,
@@ -38,7 +39,7 @@ impl ImageHDU {
             panic!("Header corrupted");
         }
 
-        let data: ImageData = ImageParser::read_from_buffer(&mut f, &mut header)?;
+        // let data: ImageData = ImageParser::read_from_buffer(&mut f, &mut header)?;
         Ok(Self::new(header, data))
     }
 
@@ -46,11 +47,6 @@ impl ImageHDU {
         //TODO: This function should not repeat here and in primary hdu
         self.header.fix_header_w_mandatory_order(&MANDATORY_KEYWORDS);
 
-        //Check for shape of self.data and write NAXISn keywords
-        ImageParser::write_image_header(&mut self.header, &self.data);
-
-        self.header.write_to_buffer(&mut f)?;
-        ImageParser::ndarray_to_buffer(&self.data, f)?;
 
         Ok(())
     }

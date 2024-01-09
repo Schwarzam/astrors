@@ -35,6 +35,23 @@ impl Header {
         }
     }
 
+    pub fn fix_header_w_mandatory_order(&mut self, keywords_order : &[&str]){
+        self.cards.sort_by(|a, b| {
+            let a_index = keywords_order.iter().position(|&k| k == a.keyword).unwrap_or(usize::MAX);
+            let b_index = keywords_order.iter().position(|&k| k == b.keyword).unwrap_or(usize::MAX);
+            a_index.cmp(&b_index)
+        });
+    }
+
+    pub fn are_mandatory_keywords_first(&mut self, mandatory_keywords: &[&str]) -> bool {
+        for (i, &keyword) in mandatory_keywords.iter().enumerate() {
+            if i >= self.cards.len() || self.cards[i].keyword != keyword {
+                return false;
+            }
+        }
+        true
+    }
+
     pub fn contains_key(&self, keyword: &str) -> bool {
         self.cards.iter().any(|card| card.keyword == keyword)
     }

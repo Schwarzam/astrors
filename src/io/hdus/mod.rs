@@ -1,4 +1,4 @@
-
+pub mod table;
 pub mod image;
 pub mod utils;
 

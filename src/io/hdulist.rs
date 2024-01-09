@@ -1,4 +1,5 @@
 use core::panic;
+use std::fmt::{Formatter, self};
 use std::io::{self, Seek, SeekFrom};
 use std::fs::File;
 
@@ -7,7 +8,7 @@ use crate::io::header::Header;
 use crate::io::hdus::primaryhdu::PrimaryHDU;
 use crate::io::hdus::imagehdu::ImageHDU;
 
-use crate::io::hdus::utils::has_more_data;
+use crate::io::hdus::utils::buffer_has_more_data;
 
 
 pub struct HDUList {
@@ -39,14 +40,39 @@ impl HDUList {
     pub fn fromfile(filename : &str) -> Result<Self, std::io::Error> {
         let mut f = File::open(filename)?;
         let mut hdulist = HDUList::new();
+        let mut primary_hdu = true;
         loop {
-            let hdu = HDU::read_from_file(&mut f)?;
+            let hdu = HDU::read_from_file(&mut f, Some(primary_hdu));
+            //TODO: implement own notimplemented error
+            let hdu = match hdu {
+                Ok(hdu) => hdu,
+                Err(e) => {
+                    println!("Error reading HDU: {}", e);
+                    continue;
+                }
+            };
+            primary_hdu = false;
+
+            println!("HDU type: {:?}", hdu);
             hdulist.add_hdu(hdu);
-            if !has_more_data(&mut f)? {
+            if !buffer_has_more_data(&mut f)? {
                 break;
             }
         }
         Ok(hdulist)
+    }
+
+    pub fn write_to(&mut self, filename: &str) -> Result<(), std::io::Error> {
+        let mut f = File::create(filename)?;
+        for hdu in &mut self.hdus {
+            match hdu {
+                HDU::Primary(hdu) => hdu.write_to_file(&mut f)?,
+                HDU::Image(hdu) => hdu.write_to_file(&mut f)?,
+                // HDU::Table(hdu) => hdu.write_to(&mut f)?,
+                // HDU::BinTable(hdu) => hdu.write_to(&mut f)?,
+            }
+        }
+        Ok(())
     }
 
     /// Adds an HDU to the HDUList.
@@ -66,19 +92,27 @@ pub enum HDU {
     //BinTable(BinTableHDU),
 }
 
+impl fmt::Debug for HDU {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            HDU::Primary(hdu) => write!(f, "<Primary HDU object at memory location {:p}>", hdu),
+            HDU::Image(hdu) => write!(f, "<Image HDU object at memory location {:p}>", hdu),
+            // HDU::Table(hdu) => write!(f, "Table HDU: {:?}", hdu),
+            // HDU::BinTable(hdu) => write!(f, "BinTable HDU: {:?}", hdu),
+        }
+    }
+}
+
 impl HDU {
-    pub fn read_from_file(mut f: &mut File) -> Result<Self, std::io::Error> {
+    pub fn read_from_file(mut f: &mut File, primary_hdu: Option<bool>) -> Result<Self, std::io::Error> {
         let current_pos = f.seek(SeekFrom::Current(0))?;
 
         let mut header = Header::new();
         header.read_from_file(&mut f)?;
 
-
-        if header.contains_key("SIMPLE") {
-            
+        if primary_hdu.unwrap_or(false) {
             f.seek(SeekFrom::Start(current_pos))?;
             let primaryhdu = PrimaryHDU::read_from_file(&mut f)?;
-            
             return Ok(HDU::Primary(primaryhdu))
 
         }else if header.contains_key("XTENSION") {
@@ -86,13 +120,16 @@ impl HDU {
             hdu_type.retain(|c| !c.is_whitespace());
             match hdu_type.as_str() {
                 "IMAGE" => {
+                    f.seek(SeekFrom::Start(current_pos))?;
                     let imagehdu = ImageHDU::read_from_file(&mut f)?;
                     return Ok(HDU::Image(imagehdu))
                 },
                 "TABLE" => {
+                    f.seek(SeekFrom::Start(current_pos))?;
                     Err(io::Error::new(io::ErrorKind::Other, "Not implemented TABLE HDU"))
                 },
                 "BINTABLE" => {
+                    f.seek(SeekFrom::Start(current_pos))?;
                     Err(io::Error::new(io::ErrorKind::Other, "Not implemented BINTABLE HDU"))
                 },
                 _ => {
@@ -103,6 +140,5 @@ impl HDU {
         } else {
             panic!("Not implemented");
         }
-        
     }
 }
