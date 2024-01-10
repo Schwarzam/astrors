@@ -198,6 +198,21 @@ fn series_to_vec_f64(series: &Series) -> Result<Vec<f64>, PolarsError> {
         .map_err(|e| e.into())
 }
 
+fn format_scientific<T>(num: T, max_len: usize) -> String 
+where
+    T: std::fmt::LowerExp + PartialEq + Into<f64>,
+{
+    let mut formatted = format!("{:.e}", num);
+    if formatted.contains("0e0"){
+        formatted = formatted.replace("0e0", "0.0");
+    }
+    if formatted.len() > max_len {
+        formatted[..max_len].to_string()
+    } else {
+        formatted
+    }
+}
+
 pub fn polars_to_columns_update_header(df: DataFrame) -> Result<Vec<Column>, std::io::Error> {
     let mut columns: Vec<Column> = Vec::new();
     
@@ -296,26 +311,25 @@ pub fn columns_to_buffer(columns: Vec<Column>, file: &mut File) -> Result<(), st
     let rows = columns[0].data.len();
     for row in 0..rows {
         for column in columns.iter() {
-            let mut data = match &column.data {
-                Data::I(data) => data[row].to_string(),
-                Data::E(data) => data[row].to_string(),
-                Data::D(data) => data[row].to_string(),
-                Data::A(data) => data[row].to_string(),
-                Data::F(data) => data[row].to_string(),
-            };
-            //if data first char is -, remove the last char
-            if data.starts_with('-') {
-                data.pop();
-            }
-
-            let mut buffer = data.as_bytes().to_vec();
             let (_, size) = get_tform_type_size(&column.tform);
 
+            let mut data = match &column.data {
+                Data::I(data) => data[row].to_string(),
+                Data::E(data) => format_scientific(data[row], size).to_string(),
+                Data::D(data) => format_scientific(data[row], size).to_string(),
+                Data::F(data) => format_scientific(data[row], size).to_string(),
+                Data::A(data) => data[row].to_string(),
+            };
+
+            let mut buffer = data.as_bytes().to_vec();
             //Pad left until size is reached
             while buffer.len() < size {
                 buffer.insert(0, b' ');
             }
-            buffer.push(b' ');
+            // if last column, dont push 
+            if column.ttype != columns[columns.len() - 1].ttype {
+                buffer.push(b' ');
+            }
             println!("Buffer: {:?}", String::from_utf8_lossy(&buffer));
             file.write_all(&buffer)?;
         }
@@ -330,7 +344,8 @@ pub fn fill_columns_w_data(columns : &mut Vec<Column>, nrows: i64, file: &mut Fi
     
             let mut buffer = vec![0; size + 1];
             file.read_exact(&mut buffer)?;
-    
+            
+            println!("Buffer: {:?}", String::from_utf8_lossy(&buffer));
             column.data.push(String::from_utf8_lossy(&buffer).trim_end().trim_start().to_string(), data_type);
         }
     }
