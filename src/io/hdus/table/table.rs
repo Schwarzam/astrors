@@ -198,7 +198,7 @@ fn series_to_vec_f64(series: &Series) -> Result<Vec<f64>, PolarsError> {
         .map_err(|e| e.into())
 }
 
-pub fn polars_to_columns(df: DataFrame) -> Result<Vec<Column>, std::io::Error> {
+pub fn polars_to_columns_update_header(df: DataFrame) -> Result<Vec<Column>, std::io::Error> {
     let mut columns: Vec<Column> = Vec::new();
     for series in df.get_columns() {
         let data = match series.dtype() {

@@ -7,13 +7,13 @@ use std::io::Result;
 use astrors::io::hdus::table::table::read_tableinfo_from_header;
 use astrors::io::hdus::table::table::fill_columns_w_data;
 use astrors::io::hdus::table::table::columns_to_polars;
-use astrors::io::hdus::table::table::polars_to_columns;
+use astrors::io::hdus::table::table::polars_to_columns_update_header;
 use astrors::io::hdus::table::table::columns_to_buffer;
 
 #[cfg(test)]
 mod tablehdu_tests {
     use std::{fs::File, io::{Write, Seek}, ops::Mul, fmt::Error};
-    use astrors::io::hdus::table::table::polars_to_columns;
+    use astrors::io::hdus::table::table::polars_to_columns_update_header;
 
     use super::*;
 
@@ -40,7 +40,7 @@ mod tablehdu_tests {
         
         let df = columns_to_polars(columns);
 
-        let columns = polars_to_columns(df.unwrap()).unwrap();
+        let columns = polars_to_columns_update_header(df.unwrap()).unwrap();
         let outfile = common::get_outtestdata_path("test_table.fits");
         let mut outf = File::create(outfile)?;
         columns_to_buffer(columns, &mut outf)?;
