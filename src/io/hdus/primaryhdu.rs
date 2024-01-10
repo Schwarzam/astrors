@@ -5,6 +5,7 @@ use crate::io::Header;
 use crate::io::hdus::image::ImageData;
 
 use crate::io::hdus::image::imageops::ImageParser;
+use crate::io::header::card::Card;
 use crate::io::utils::pad_buffer_to_fits_block;
 
 
@@ -24,6 +25,17 @@ impl PrimaryHDU {
         Self {
             header,
             data,
+        }
+    }
+
+    pub fn default() -> Self {
+        let mut header = Header::new();
+        header.add_card(&Card::new("SIMPLE".to_string(), "T".to_string(), Some("Primary HDU".to_string())));
+        header.add_card(&Card::new("BITPIX".to_string(), "8".to_string(), Some("Number of bits per data pixel".to_string())));
+        header.add_card(&Card::new("NAXIS".to_string(), "0".to_string(), Some("Number of data axes".to_string())));
+        Self {
+            header: header,
+            data: ImageData::new(),
         }
     }
 

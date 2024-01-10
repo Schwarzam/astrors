@@ -4,16 +4,13 @@ use astrors::io::Header;
 use astrors::io::hdus::primaryhdu::PrimaryHDU;
 use std::io::Result;
 
-use astrors::io::hdus::table::table::read_tableinfo_from_header;
-use astrors::io::hdus::table::table::fill_columns_w_data;
-use astrors::io::hdus::table::table::columns_to_polars;
-use astrors::io::hdus::table::table::polars_to_columns_update_header;
-use astrors::io::hdus::table::table::columns_to_buffer;
+use astrors::io::hdus::table::table::*;
 
 #[cfg(test)]
 mod tablehdu_tests {
     use std::{fs::File, io::{Write, Seek}, ops::Mul, fmt::Error};
-    use astrors::io::hdus::table::table::polars_to_columns_update_header;
+    use astrors::io::hdus::{table::table::polars_to_columns_update_header, primaryhdu};
+    use polars::lazy::dsl::col;
 
     use super::*;
 
@@ -26,6 +23,7 @@ mod tablehdu_tests {
         //header.pretty_print_advanced();
 
         let end_pos = PrimaryHDU::get_end_byte_position(&mut f);
+        
         //Seek end_pos 
         f.seek(std::io::SeekFrom::Start(end_pos as u64))?;
 
@@ -41,8 +39,16 @@ mod tablehdu_tests {
         let df = columns_to_polars(columns);
 
         let columns = polars_to_columns_update_header(df.unwrap()).unwrap();
+        
         let outfile = common::get_outtestdata_path("test_table.fits");
         let mut outf = File::create(outfile)?;
+        
+        create_table_on_header(&mut header, &columns);
+
+        let mut primaryhdu = PrimaryHDU::default();
+        primaryhdu.write_to_file(&mut outf)?;
+
+        header.write_to_buffer(&mut outf)?;
         columns_to_buffer(columns, &mut outf)?;
 
 

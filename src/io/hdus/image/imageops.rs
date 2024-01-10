@@ -26,9 +26,14 @@ pub enum ImageData {
     I32(ArrayD<i32>),
     F32(ArrayD<f32>),
     F64(ArrayD<f64>),
+    EMPTY,
 }
 
 impl ImageData {
+    pub fn new() -> Self {
+        ImageData::EMPTY
+    }
+
     pub fn get_bitpix(&self) -> i32 {
         match self {
             ImageData::U8(_) => 8,
@@ -36,6 +41,7 @@ impl ImageData {
             ImageData::I32(_) => 32,
             ImageData::F32(_) => -32,
             ImageData::F64(_) => -64,
+            _ => 8,
         }
     }
 
@@ -46,6 +52,7 @@ impl ImageData {
             ImageData::I32(_) => String::from("int32"),
             ImageData::F32(_) => String::from("float32"),
             ImageData::F64(_) => String::from("float64"),
+            _ => String::from("uint8"),
         }
     }
 
@@ -66,6 +73,7 @@ impl ImageData {
             ImageData::F64(array) => {
                 array.shape().to_vec()
             },
+            _ => vec![0, 0],
         }
     }
 }
@@ -94,6 +102,7 @@ impl fmt::Debug for ImageData {
             ImageData::F64(array) => {
                 write!(f, "FitsData::F64({:?})", array)
             },
+            _ => write!(f, "FitsData::EMPTY"),
         }
     }
 }
@@ -200,17 +209,23 @@ impl ImageParser {
                 let vect = array.clone().into_raw_vec();
                 vect.par_iter().flat_map(|&item| item.to_be_bytes().to_vec()).collect::<Vec<u8>>()
             },
+            _ => vec![],
         }
     }
 
     pub fn write_image_header(header: &mut Header, data: &ImageData) {
         let shape = data.get_shape();
-        let naxis = shape.len();
+        let mut naxis = shape.len();
+        if shape.eq(&vec![0, 0]) {
+            naxis = 0;
+        }
+        
         
         let bitpix = data.get_bitpix();
         header["BITPIX"].value = CardValue::INT(bitpix as i64);
 
         header["NAXIS"].value = CardValue::INT(naxis as i64);
+        header.pretty_print_advanced();
         for i in 0..naxis {
             let naxisn = format!("NAXIS{}", i+1);
             header[naxisn.as_str()].value = CardValue::INT(shape[i] as i64);
@@ -275,6 +290,7 @@ impl ImageParser {
                     bytes_written += bytes.len();
                 }
             }
+            _ => bytes_written += 0,
         }
         let remainder = bytes_written % 2880;
         if remainder != 0 {
