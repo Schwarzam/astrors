@@ -223,9 +223,8 @@ impl ImageParser {
         
         let bitpix = data.get_bitpix();
         header["BITPIX"].value = CardValue::INT(bitpix as i64);
-
         header["NAXIS"].value = CardValue::INT(naxis as i64);
-        header.pretty_print_advanced();
+        
         for i in 0..naxis {
             let naxisn = format!("NAXIS{}", i+1);
             header[naxisn.as_str()].value = CardValue::INT(shape[i] as i64);

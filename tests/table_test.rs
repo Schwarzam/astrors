@@ -9,7 +9,7 @@ use astrors::io::hdus::table::table::*;
 #[cfg(test)]
 mod tablehdu_tests {
     use std::{fs::File, io::{Write, Seek}, ops::Mul, fmt::Error};
-    use astrors::io::hdus::{table::table::polars_to_columns_update_header, primaryhdu};
+    use astrors::io::hdus::{table::table::polars_to_columns, primaryhdu};
     use polars::lazy::dsl::col;
 
     use super::*;
@@ -19,9 +19,7 @@ mod tablehdu_tests {
         use std::{fs::File, io::Read};
         let testfile = common::get_testdata_path("WFPC2u57.fits");
         let mut f: File = File::open(testfile)?;
-        
-        //header.pretty_print_advanced();
-
+    
         let end_pos = PrimaryHDU::get_end_byte_position(&mut f);
         
         //Seek end_pos 
@@ -38,7 +36,7 @@ mod tablehdu_tests {
         
         let df = columns_to_polars(columns);
 
-        let columns = polars_to_columns_update_header(df.unwrap()).unwrap();
+        let columns = polars_to_columns(df.unwrap()).unwrap();
         
         let outfile = common::get_outtestdata_path("test_table.fits");
         let mut outf = File::create(outfile)?;

@@ -1,6 +1,6 @@
 use std::{fs::File, io::{Read, Write}};
 
-use crate::io::{Header, header::card::Card};
+use crate::io::{Header, header::card::Card, utils::pad_buffer_to_fits_block};
 
 use polars::prelude::*; // Polars library
 
@@ -206,6 +206,7 @@ where
     if formatted.contains("0e0"){
         formatted = formatted.replace("0e0", "0.0");
     }
+    formatted = formatted.replace("e", "E");
     if formatted.len() > max_len {
         formatted[..max_len].to_string()
     } else {
@@ -213,7 +214,7 @@ where
     }
 }
 
-pub fn polars_to_columns_update_header(df: DataFrame) -> Result<Vec<Column>, std::io::Error> {
+pub fn polars_to_columns(df: DataFrame) -> Result<Vec<Column>, std::io::Error> {
     let mut columns: Vec<Column> = Vec::new();
     
     for series in df.get_columns() {
@@ -278,7 +279,7 @@ pub fn calculate_number_of_bytes_of_row(columns: &Vec<Column>) -> usize {
     let mut bytes = 0;
     for column in columns.iter() {
         let (_, size) = get_tform_type_size(&column.tform);
-        bytes += size;
+        bytes += size + 1;
     }
     bytes
 }
@@ -309,6 +310,7 @@ pub fn create_table_on_header(header: &mut Header, columns: &Vec<Column>) {
 pub fn columns_to_buffer(columns: Vec<Column>, file: &mut File) -> Result<(), std::io::Error> {
     //buffer should be written in utf8
     let rows = columns[0].data.len();
+    let mut bytes_written = 0;
     for row in 0..rows {
         for column in columns.iter() {
             let (_, size) = get_tform_type_size(&column.tform);
@@ -330,10 +332,12 @@ pub fn columns_to_buffer(columns: Vec<Column>, file: &mut File) -> Result<(), st
             if column.ttype != columns[columns.len() - 1].ttype {
                 buffer.push(b' ');
             }
-            println!("Buffer: {:?}", String::from_utf8_lossy(&buffer));
+            bytes_written += buffer.len();
+            // println!("Buffer: {:?}", String::from_utf8_lossy(&buffer));
             file.write_all(&buffer)?;
         }
     }
+    pad_buffer_to_fits_block(file, bytes_written)?;
     Ok(())
 }
 
@@ -345,7 +349,6 @@ pub fn fill_columns_w_data(columns : &mut Vec<Column>, nrows: i64, file: &mut Fi
             let mut buffer = vec![0; size + 1];
             file.read_exact(&mut buffer)?;
             
-            println!("Buffer: {:?}", String::from_utf8_lossy(&buffer));
             column.data.push(String::from_utf8_lossy(&buffer).trim_end().trim_start().to_string(), data_type);
         }
     }
