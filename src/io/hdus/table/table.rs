@@ -213,8 +213,8 @@ pub fn polars_to_columns(df: DataFrame) -> Result<Vec<Column>, std::io::Error> {
             Data::E(_) => "E15.7",
             Data::D(_) => "D25.17",
             Data::A(data) => {
-                //formatted_string = format!("A{}", column.data.max_len());
-                formatted_string = format!("A48");
+                formatted_string = format!("A{}", column.data.max_len());
+                //formatted_string = format!("A48");
                 &formatted_string
             },
             Data::F(_) => "F",

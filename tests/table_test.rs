@@ -34,9 +34,15 @@ mod tablehdu_tests {
         //println!("Columns: {:?}", res);
         let data = fill_columns_w_data(&mut columns, header["NAXIS2"].value.as_int().unwrap_or(0), &mut f);
         
-        let df = columns_to_polars(columns);
+        let mut df = columns_to_polars(columns).unwrap();
 
-        let columns = polars_to_columns(df.unwrap()).unwrap();
+        let last_row = df.tail(Some(1));
+        // Append the cloned row to the DataFrame
+        df.vstack_mut(&last_row);
+
+        println!("DF: {:?}", df);
+
+        let columns = polars_to_columns(df).unwrap();
         
         let outfile = common::get_outtestdata_path("test_table.fits");
         let mut outf = File::create(outfile)?;
