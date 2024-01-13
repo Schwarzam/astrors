@@ -1,6 +1,9 @@
 use std::fs::File;
 use std::io::Result;
 
+use polars::frame::DataFrame;
+use crate::io::hdus::table::bintable::*;
+
 use crate::io::Header;
 
 const MANDATORY_KEYWORDS: [&str; 3] = [
@@ -9,18 +12,14 @@ const MANDATORY_KEYWORDS: [&str; 3] = [
     "NAXIS",
 ];
 
-pub struct ImageHDU{
+
+pub struct BinTableHDU{
     pub header: Header,
-    pub data: None, //Should be TableData
+    pub data: DataFrame,
 }
 
-pub struct ImageHDU{
-    pub header: Header,
-    pub data: ImageData,
-}
-
-impl ImageHDU {
-    pub fn new(header: Header, data: ImageData) -> Self {
+impl BinTableHDU {
+    pub fn new(header: Header, data: DataFrame) -> Self {
         Self {
             header,
             data,
@@ -33,11 +32,15 @@ impl ImageHDU {
         let mut header = Header::new();
         header.read_from_file(&mut f)?;
         
-        if !header.are_mandatory_keywords_first(&MANDATORY_KEYWORDS) {
-            // TODO: Return a proper error
-            // Err(std::io::Error::new(std::io::ErrorKind::Other, "Header corrupted"));
-            panic!("Header corrupted");
-        }
+        let mut columns = read_tableinfo_from_header(&header).unwrap();
+        let data = fill_columns_w_data(&mut columns, header["NAXIS2"].value.as_int().unwrap_or(0), &mut f);
+
+        let data = columns_to_polars(columns).unwrap();
+        // if !header.are_mandatory_keywords_first(&MANDATORY_KEYWORDS) {
+        //     // TODO: Return a proper error
+        //     // Err(std::io::Error::new(std::io::ErrorKind::Other, "Header corrupted"));
+        //     panic!("Header corrupted");
+        // }
 
         // let data: ImageData = ImageParser::read_from_buffer(&mut f, &mut header)?;
         Ok(Self::new(header, data))
@@ -47,6 +50,11 @@ impl ImageHDU {
         //TODO: This function should not repeat here and in primary hdu
         self.header.fix_header_w_mandatory_order(&MANDATORY_KEYWORDS);
 
+        let columns = polars_to_columns(self.data.clone()).unwrap();
+        create_table_on_header(&mut self.header, &columns);
+
+        self.header.write_to_buffer(&mut f)?;
+        columns_to_buffer(columns, &mut f)?;
 
         Ok(())
     }

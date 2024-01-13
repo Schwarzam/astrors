@@ -4,3 +4,4 @@ pub mod utils;
 
 pub mod imagehdu;
 pub mod primaryhdu;
+pub mod bintablehdu;
