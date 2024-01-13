@@ -59,6 +59,11 @@ impl PrimaryHDU {
         let mut header = Header::new();
         header.read_from_file(&mut f).unwrap();
 
+        if header["NAXIS"].value.as_int().unwrap_or(0) == 0 {
+            //actual position after header
+            return f.seek(std::io::SeekFrom::Current(0)).unwrap() as usize;
+        }
+
         let current = f.seek(std::io::SeekFrom::Current(0)).unwrap();
         let image_size = ImageParser::calculate_image_bytes(&header);
         let mut end = current + image_size as u64;

@@ -148,6 +148,21 @@ pub fn read_tableinfo_from_header(header: &Header) -> Result<Vec<Column>, String
     Ok(columns)
 }
 
+pub fn fill_columns_w_data(columns : &mut Vec<Column>, nrows: i64, file: &mut File) -> Result<(), std::io::Error> {
+    for row in 1..=nrows{
+        for column in columns.iter_mut() {
+            let (data_type, size) = get_tform_type_size(&column.tform);
+    
+            let mut buffer = vec![0; size + 1];
+            file.read_exact(&mut buffer)?;
+            
+            column.data.push(String::from_utf8_lossy(&buffer).trim_end().trim_start().to_string(), data_type);
+        }
+    }
+    Ok(())
+}
+
+
 pub fn columns_to_polars(columns: Vec<Column>) -> Result<DataFrame, String> {
     let mut polars_columns: Vec<Series> = Vec::new();
     for column in columns {
@@ -294,16 +309,3 @@ pub fn columns_to_buffer(columns: Vec<Column>, file: &mut File) -> Result<(), st
     Ok(())
 }
 
-pub fn fill_columns_w_data(columns : &mut Vec<Column>, nrows: i64, file: &mut File) -> Result<(), std::io::Error> {
-    for row in 1..=nrows{
-        for column in columns.iter_mut() {
-            let (data_type, size) = get_tform_type_size(&column.tform);
-    
-            let mut buffer = vec![0; size + 1];
-            file.read_exact(&mut buffer)?;
-            
-            column.data.push(String::from_utf8_lossy(&buffer).trim_end().trim_start().to_string(), data_type);
-        }
-    }
-    Ok(())
-}

@@ -1,4 +1,5 @@
 use core::panic;
+use std::{fs::File, io::{Read, Write}};
 
 use crate::io::{Header, header::card::Card, utils::pad_buffer_to_fits_block};
 use polars::prelude::*; // Polars library
@@ -20,7 +21,31 @@ pub enum Data {
     Q(Vec<String>), // Array descriptor
 }
 
+
+
 impl Data {
+    pub fn new(tform : &str) -> Self {
+        let tform = tform.trim();
+        let tform_type = tform.chars().last().unwrap_or('A');
+        
+        match tform_type {
+            'L' => Data::L(Vec::new()),
+            'X' => Data::X(Vec::new()),
+            'B' => Data::B(Vec::new()),
+            'I' => Data::I(Vec::new()),
+            'J' => Data::J(Vec::new()),
+            'K' => Data::K(Vec::new()),
+            'A' => Data::A(Vec::new()),
+            'E' => Data::E(Vec::new()),
+            'D' => Data::D(Vec::new()),
+            'C' => Data::C(Vec::new()),
+            'M' => Data::M(Vec::new()),
+            'P' => Data::P(Vec::new()),
+            'Q' => Data::Q(Vec::new()),
+            _ => Data::A(Vec::new()),
+        }
+    }
+
     pub fn byte_value(&self) -> usize{
         match self {
             Data::L(_) => 1,
@@ -39,108 +64,151 @@ impl Data {
         }
     }
 
-    pub fn push(&mut self, element: String, data_type: char) {
+    pub fn byte_value_from_str(data_type : &str) -> usize {
+        match data_type {
+            "L" => 1,
+            "X" => 1,
+            "B" => 1,
+            "I" => 2,
+            "J" => 4,
+            "K" => 8,
+            "A" => 1,
+            "E" => 4,
+            "D" => 8,
+            "C" => 8,
+            "M" => 16,
+            "P" => 8,
+            "Q" => 16,
+            _ => panic!("Wrong data type"),
+        }
+    }
+
+    pub fn push(&mut self, bytes: Vec<u8>, data_type: char) {
         match data_type {
             'L' => {
-                let element = element.to_string().parse::<bool>().unwrap();
+                // parse bytes to bool
                 match self {
-                    Data::L(data) => data.push(element),
+                    Data::L(data) => data.push(bytes[0] != 0),
                     _ => panic!("Wrong data type"),
                 }
             }
             'X' => {
-                let element = element.to_string().parse::<u8>().unwrap();
+                // parse bytes to u8
                 match self {
-                    Data::X(data) => data.push(element),
+                    Data::X(data) => data.push(bytes[0]),
                     _ => panic!("Wrong data type"),
                 }
             }
             'B' => {
-                let element = element.to_string().parse::<i8>().unwrap();
+                // parse bytes to i8
                 match self {
-                    Data::B(data) => data.push(element),
+                    Data::B(data) => data.push(bytes[0] as i8),
                     _ => panic!("Wrong data type"),
                 }
             }
             'I' => {
-                let element = element.to_string().parse::<i16>().unwrap();
+                // parse bytes to i16
                 match self {
-                    Data::I(data) => data.push(element),
+                    Data::I(data) => data.push(i16::from_be_bytes([bytes[0], bytes[1]])),
                     _ => panic!("Wrong data type"),
                 }
             }
             'J' => {
-                let element = element.to_string().parse::<i32>().unwrap();
+                // parse bytes to i32
                 match self {
-                    Data::J(data) => data.push(element),
+                    Data::J(data) => data.push(i32::from_be_bytes([bytes[0], bytes[1], bytes[2], bytes[3]])),
                     _ => panic!("Wrong data type"),
                 }
             }
             'K' => {
-                let element = element.to_string().parse::<i64>().unwrap();
+                // parse bytes to i64
                 match self {
-                    Data::K(data) => data.push(element),
+                    Data::K(data) => data.push(i64::from_be_bytes([bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5], bytes[6], bytes[7]])),
                     _ => panic!("Wrong data type"),
                 }
             }
             'A' => {
-                let element = element.to_string();
+                // parse bytes to String
                 match self {
-                    Data::A(data) => data.push(element),
+                    Data::A(data) => {
+                        let mut string = String::new();
+                        for byte in bytes {
+                            string.push(byte as char);
+                        }
+                        println!("String: {}", string);
+                        data.push(string);
+                    }
                     _ => panic!("Wrong data type"),
                 }
             }
             'E' => {
-                let element = element.to_string().parse::<f32>().unwrap();
+                // parse bytes to f32
                 match self {
-                    Data::E(data) => data.push(element),
+                    Data::E(data) => data.push(f32::from_be_bytes([bytes[0], bytes[1], bytes[2], bytes[3]])),
                     _ => panic!("Wrong data type"),
                 }
             }
             'D' => {
-                let element = element.to_string().parse::<f64>().unwrap();
+                // parse bytes to f64
                 match self {
-                    Data::D(data) => data.push(element),
+                    Data::D(data) => data.push(f64::from_be_bytes([bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5], bytes[6], bytes[7]])),
                     _ => panic!("Wrong data type"),
                 }
             }
             'C' => {
-                let element = element.to_string();
+                // parse bytes to String
                 match self {
-                    Data::C(data) => data.push(element),
+                    Data::C(data) => {
+                        let mut string = String::new();
+                        for byte in bytes {
+                            string.push(byte as char);
+                        }
+                        data.push(string);
+                    }
                     _ => panic!("Wrong data type"),
                 }
             }
             'M' => {
-                let element = element.to_string();
+                // parse bytes to String
                 match self {
-                    Data::M(data) => data.push(element),
+                    Data::M(data) => {
+                        let mut string = String::new();
+                        for byte in bytes {
+                            string.push(byte as char);
+                        }
+                        data.push(string);
+                    }
                     _ => panic!("Wrong data type"),
                 }
             }
             'P' => {
-                let element = element.to_string();
+                // parse bytes to String
                 match self {
-                    Data::P(data) => data.push(element),
+                    Data::P(data) => {
+                        let mut string = String::new();
+                        for byte in bytes {
+                            string.push(byte as char);
+                        }
+                        data.push(string);
+                    }
                     _ => panic!("Wrong data type"),
                 }
             }
             'Q' => {
-                let element = element.to_string();
+                // parse bytes to String
                 match self {
-                    Data::Q(data) => data.push(element),
+                    Data::Q(data) => {
+                        let mut string = String::new();
+                        for byte in bytes {
+                            string.push(byte as char);
+                        }
+                        data.push(string);
+                    }
                     _ => panic!("Wrong data type"),
                 }
             }
-            
-            
-            _ => {
-                //treat as string
-                match self {
-                    Data::A(data) => data.push(element.to_string()),
-                    _ => panic!("Wrong data type"),
-                }
-            }
+            _ => panic!("Wrong data type"),
+
         }
     }
 
@@ -166,6 +234,22 @@ impl Data {
 
 }
 
+fn get_tform_type_size(tform: &str) -> (char, usize) {
+    let tform = tform.trim();
+    
+    //return the last char of tform
+    let tform_type = tform.chars().last().unwrap_or('A');
+    let mut size = Data::byte_value_from_str(&tform_type.to_string());
+    if tform_type == 'A' {
+
+        // The number is before the A like 48A or 8A
+        size = tform[0..tform.len()-1].parse::<usize>().unwrap_or(0);
+        
+    }
+
+    (tform_type, size)
+}
+
 #[derive(Debug)]
 pub struct Column {
     ttype: String, 
@@ -177,7 +261,7 @@ pub struct Column {
 
 pub fn read_tableinfo_from_header(header: &Header) -> Result<Vec<Column>, String> {
     let mut columns: Vec<Column> = Vec::new();
-    let tfields = header["TFIELDS"].value.as_int().unwrap_or(0);
+    let tfields = header["NAXIS2"].value.as_int().unwrap_or(0);
 
     for i in 1..=tfields {
         let ttype = header.get_card(&format!("TTYPE{}", i));
@@ -200,21 +284,27 @@ pub fn read_tableinfo_from_header(header: &Header) -> Result<Vec<Column>, String
             tform,
             tunit,
             tdisp,
-            data : Data::I(Vec::new()),
-            // data : match get_tform_type_size(&tform2) {
-            //     ('I', _) => Data::I(Vec::new()),
-            //     ('E', _) => Data::E(Vec::new()),
-            //     ('D', _) => Data::D(Vec::new()),
-            //     ('A', _) => Data::A(Vec::new()),
-            //     ('F', _) => Data::F(Vec::new()),
-            //     (_, _) => Data::A(Vec::new()),
-            // }
+            data : Data::new(&tform2),
         };
 
         columns.push(column);
     }
 
     Ok(columns)
+}
+
+pub fn fill_columns_w_data(columns : &mut Vec<Column>, nrows: i64, file: &mut File) -> Result<(), std::io::Error> {
+    for row in 1..=nrows{
+        for column in columns.iter_mut() {
+            let (data_type, size) = get_tform_type_size(&column.tform);
+    
+            let mut buffer = vec![0; size];
+            file.read_exact(&mut buffer)?;
+            
+            column.data.push(buffer, data_type);
+        }
+    }
+    Ok(())
 }
 
 pub fn columns_to_polars(columns: Vec<Column>) -> Result<DataFrame, String> {
