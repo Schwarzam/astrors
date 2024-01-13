@@ -9,7 +9,6 @@ use astrors::io::hdus::table::bintable::*;
 #[cfg(test)]
 mod tablehdu_tests {
     use std::{fs::File, io::{Write, Seek}, ops::Mul, fmt::Error};
-    use astrors::io::hdus::{table::table::polars_to_columns, primaryhdu};
     use polars::lazy::dsl::col;
 
     use super::*;
@@ -37,19 +36,20 @@ mod tablehdu_tests {
         
         let df = columns_to_polars(columns);
 
-        println!("DF: {:?}", df);
-        // let columns = polars_to_columns(df.unwrap()).unwrap();
+        //println!("DF: {:?}", df);
+        let columns = polars_to_columns(df.unwrap()).unwrap();
         
-        // let outfile = common::get_outtestdata_path("test_table.fits");
-        // let mut outf = File::create(outfile)?;
         
-        // create_table_on_header(&mut header, &columns);
+        let outfile = common::get_outtestdata_path("test_bintable.fits");
+        let mut outf = File::create(outfile)?;
+        
+        create_table_on_header(&mut header, &columns);
 
-        // let mut primaryhdu = PrimaryHDU::default();
-        // primaryhdu.write_to_file(&mut outf)?;
+        let mut primaryhdu = PrimaryHDU::default();
+        primaryhdu.write_to_file(&mut outf)?;
 
-        // header.write_to_buffer(&mut outf)?;
-        // columns_to_buffer(columns, &mut outf)?;
+        header.write_to_buffer(&mut outf)?;
+        columns_to_buffer(columns, &mut outf)?;
 
 
         Ok(())

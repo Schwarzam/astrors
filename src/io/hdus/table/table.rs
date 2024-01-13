@@ -229,19 +229,7 @@ pub fn polars_to_columns(df: DataFrame) -> Result<Vec<Column>, std::io::Error> {
     Ok(columns)
 }
 
-pub fn clear_table_on_header(header: &mut Header) {
-    let tfields = header["TFIELDS"].value.as_int().unwrap_or(0);
-    for i in 1..=tfields {
-        header.remove(&format!("TTYPE{}", i));
-        header.remove(&format!("TFORM{}", i));
-        header.remove(&format!("TUNIT{}", i));
-        header.remove(&format!("TDISP{}", i));
-        header.remove(&format!("TBCOL{}", i));
-    }
-    header.remove("TFIELDS");
-    header.remove("NAXIS1");
-    header.remove("NAXIS2");
-}
+
 
 pub fn calculate_number_of_bytes_of_row(columns: &Vec<Column>) -> usize {
     let mut bytes = 0;
