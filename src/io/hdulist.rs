@@ -7,6 +7,7 @@ use crate::io::header::Header;
 
 use crate::io::hdus::primaryhdu::PrimaryHDU;
 use crate::io::hdus::imagehdu::ImageHDU;
+use crate::io::hdus::bintablehdu::BinTableHDU;
 
 use crate::io::hdus::utils::buffer_has_more_data;
 
@@ -69,7 +70,7 @@ impl HDUList {
                 HDU::Primary(hdu) => hdu.write_to_file(&mut f)?,
                 HDU::Image(hdu) => hdu.write_to_file(&mut f)?,
                 // HDU::Table(hdu) => hdu.write_to(&mut f)?,
-                // HDU::BinTable(hdu) => hdu.write_to(&mut f)?,
+                HDU::BinTable(hdu) => hdu.write_to_file(&mut f)?,
             }
         }
         Ok(())
@@ -89,7 +90,7 @@ pub enum HDU {
     Primary(PrimaryHDU),
     Image(ImageHDU),
     //Table(TableHDU),
-    //BinTable(BinTableHDU),
+    BinTable(BinTableHDU),
 }
 
 impl fmt::Debug for HDU {
@@ -98,7 +99,7 @@ impl fmt::Debug for HDU {
             HDU::Primary(hdu) => write!(f, "<Primary HDU object at memory location {:p}>", hdu),
             HDU::Image(hdu) => write!(f, "<Image HDU object at memory location {:p}>", hdu),
             // HDU::Table(hdu) => write!(f, "Table HDU: {:?}", hdu),
-            // HDU::BinTable(hdu) => write!(f, "BinTable HDU: {:?}", hdu),
+            HDU::BinTable(hdu) => write!(f, "<BinTable HDU object at memory location {:p}>", hdu),
         }
     }
 }
@@ -130,7 +131,8 @@ impl HDU {
                 },
                 "BINTABLE" => {
                     f.seek(SeekFrom::Start(current_pos))?;
-                    Err(io::Error::new(io::ErrorKind::Other, "Not implemented BINTABLE HDU"))
+                    let bintablehdu = BinTableHDU::read_from_file(&mut f)?;
+                    return Ok(HDU::BinTable(bintablehdu))
                 },
                 _ => {
                     Err(io::Error::new(io::ErrorKind::Other, "Not implemented HDU type"))

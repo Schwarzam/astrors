@@ -1,10 +1,13 @@
 mod common;
 
+use std::{fs::File, io::Read};
 use astrors::io::Header;
 use astrors::io::hdus::primaryhdu::PrimaryHDU;
 use std::io::Result;
 
 use astrors::io::hdus::table::bintable::*;
+
+use astrors::io::hdus::bintablehdu::BinTableHDU;
 
 #[cfg(test)]
 mod tablehdu_tests {
@@ -15,7 +18,7 @@ mod tablehdu_tests {
 
     #[test]
     fn read_bintablehdu() -> Result<()> {
-        use std::{fs::File, io::Read};
+        
         let testfile = common::get_testdata_path("EUVEngc4151imgx.fits");
         let mut f: File = File::open(testfile)?;
     
@@ -51,6 +54,31 @@ mod tablehdu_tests {
         header.write_to_buffer(&mut outf)?;
         columns_to_buffer(columns, &mut outf)?;
 
+
+        Ok(())
+    }
+
+    #[test]
+    pub fn bintablehdu_test() -> Result<()> {
+        let testfile = common::get_testdata_path("EUVEngc4151imgx.fits");
+        let mut f: File = File::open(testfile)?;
+    
+        let end_pos = PrimaryHDU::get_end_byte_position(&mut f);
+        
+        //Seek end_pos 
+        f.seek(std::io::SeekFrom::Start(end_pos as u64))?;
+
+        let mut bintable = BinTableHDU::read_from_file(&mut f)?;
+        
+        //println!("Df {:} ", bintable.data);
+
+        let outfile = common::get_outtestdata_path("test_bintable.fits");
+        let mut outf = File::create(outfile)?;
+
+        let mut primaryhdu = PrimaryHDU::default();
+        primaryhdu.write_to_file(&mut outf)?;
+        
+        bintable.write_to_file(&mut outf)?;
 
         Ok(())
     }

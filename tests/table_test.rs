@@ -6,6 +6,8 @@ use std::io::Result;
 
 use astrors::io::hdus::table::table::*;
 
+use astrors::io::hdus::tablehdu::TableHDU;
+
 #[cfg(test)]
 mod tablehdu_tests {
     use std::{fs::File, io::{Write, Seek}, ops::Mul, fmt::Error};
@@ -40,7 +42,7 @@ mod tablehdu_tests {
         // Append the cloned row to the DataFrame
         df.vstack_mut(&last_row);
 
-        println!("DF: {:?}", df);
+        // println!("DF: {:?}", df);
 
         let columns = polars_to_columns(df).unwrap();
         
@@ -55,8 +57,31 @@ mod tablehdu_tests {
         header.write_to_buffer(&mut outf)?;
         columns_to_buffer(columns, &mut outf)?;
 
-
         Ok(())
     }
 
+    #[test]
+    fn tablehdu_test() -> Result<()> {
+        use std::{fs::File, io::Read};
+        let testfile = common::get_testdata_path("WFPC2u57.fits");
+        let mut f: File = File::open(testfile)?;
+        
+        let end_pos = PrimaryHDU::get_end_byte_position(&mut f);
+        
+        //Seek end_pos 
+        f.seek(std::io::SeekFrom::Start(end_pos as u64))?;
+
+        let mut tablehdu = TableHDU::read_from_file(&mut f)?;
+        
+        println!("Df {:} ", tablehdu.data);
+        let outfile = common::get_outtestdata_path("test_table.fits");
+        let mut outf = File::create(outfile)?;
+
+        let mut primaryhdu = PrimaryHDU::default();
+        primaryhdu.write_to_file(&mut outf)?;
+        
+        tablehdu.write_to_file(&mut outf)?;
+
+        Ok(())
+    }
 }
