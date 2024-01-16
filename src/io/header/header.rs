@@ -130,14 +130,21 @@ impl Header {
     // test
     pub fn read_from_file(&mut self, file: &mut File) -> std::io::Result<()>{
         let mut last_card : Card = Card::default();
+        
         'outer: loop {
             let mut buffer= [0; 2880];
             let _ = file.read(&mut buffer[..])?;
             
             for card in buffer.chunks(80) {
                 let card_str = String::from_utf8_lossy(card).trim_end().to_string();
-
+                
+                if !card_str.is_empty() {
+                    println!("Card: {}", card_str);
+                }
+                
+                
                 if card_str == "END" {
+                    
                     self.add_card(&last_card);
                     break 'outer;
                 }

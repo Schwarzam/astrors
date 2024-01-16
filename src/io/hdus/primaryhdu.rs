@@ -49,8 +49,14 @@ impl PrimaryHDU {
             panic!("Header corrupted");
         }
 
-        let data: ImageData = ImageParser::read_from_buffer(&mut f, &mut header)?;
-        Ok(Self::new(header, data))
+        if header["NAXIS"].value.as_int().unwrap_or(0) == 0 {
+            //actual position after header
+            return Ok(Self::new(header, ImageData::EMPTY));
+        }
+        else {
+            let data: ImageData = ImageParser::read_from_buffer(&mut f, &mut header)?;
+            Ok(Self::new(header, data))
+        }
     }
 
     pub fn get_end_byte_position(mut f: &mut File) -> usize {

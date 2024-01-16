@@ -8,6 +8,7 @@ use crate::io::header::Header;
 use crate::io::hdus::primaryhdu::PrimaryHDU;
 use crate::io::hdus::imagehdu::ImageHDU;
 use crate::io::hdus::bintablehdu::BinTableHDU;
+use crate::io::hdus::tablehdu::TableHDU;
 
 use crate::io::hdus::utils::buffer_has_more_data;
 
@@ -43,6 +44,7 @@ impl HDUList {
         let mut hdulist = HDUList::new();
         let mut primary_hdu = true;
         loop {
+            println!("Reading HDU");
             let hdu = HDU::read_from_file(&mut f, Some(primary_hdu));
             //TODO: implement own notimplemented error
             let hdu = match hdu {
@@ -54,8 +56,9 @@ impl HDUList {
             };
             primary_hdu = false;
 
-            println!("HDU type: {:?}", hdu);
+            println!("HDU: {:?}", hdu);
             hdulist.add_hdu(hdu);
+
             if !buffer_has_more_data(&mut f)? {
                 break;
             }
@@ -69,7 +72,7 @@ impl HDUList {
             match hdu {
                 HDU::Primary(hdu) => hdu.write_to_file(&mut f)?,
                 HDU::Image(hdu) => hdu.write_to_file(&mut f)?,
-                // HDU::Table(hdu) => hdu.write_to(&mut f)?,
+                HDU::Table(hdu) => hdu.write_to_file(&mut f)?,
                 HDU::BinTable(hdu) => hdu.write_to_file(&mut f)?,
             }
         }
@@ -89,7 +92,7 @@ impl HDUList {
 pub enum HDU {
     Primary(PrimaryHDU),
     Image(ImageHDU),
-    //Table(TableHDU),
+    Table(TableHDU),
     BinTable(BinTableHDU),
 }
 
@@ -98,7 +101,7 @@ impl fmt::Debug for HDU {
         match self {
             HDU::Primary(hdu) => write!(f, "<Primary HDU object at memory location {:p}>", hdu),
             HDU::Image(hdu) => write!(f, "<Image HDU object at memory location {:p}>", hdu),
-            // HDU::Table(hdu) => write!(f, "Table HDU: {:?}", hdu),
+            HDU::Table(hdu) => write!(f, "<Table HDU object at memory location {:p}>", hdu),
             HDU::BinTable(hdu) => write!(f, "<BinTable HDU object at memory location {:p}>", hdu),
         }
     }
@@ -106,11 +109,12 @@ impl fmt::Debug for HDU {
 
 impl HDU {
     pub fn read_from_file(mut f: &mut File, primary_hdu: Option<bool>) -> Result<Self, std::io::Error> {
+        
         let current_pos = f.seek(SeekFrom::Current(0))?;
-
+        
         let mut header = Header::new();
         header.read_from_file(&mut f)?;
-
+        header.pretty_print_advanced();
         if primary_hdu.unwrap_or(false) {
             f.seek(SeekFrom::Start(current_pos))?;
             let primaryhdu = PrimaryHDU::read_from_file(&mut f)?;
@@ -127,7 +131,8 @@ impl HDU {
                 },
                 "TABLE" => {
                     f.seek(SeekFrom::Start(current_pos))?;
-                    Err(io::Error::new(io::ErrorKind::Other, "Not implemented TABLE HDU"))
+                    let tablehdu = TableHDU::read_from_file(&mut f)?;
+                    return Ok(HDU::Table(tablehdu))
                 },
                 "BINTABLE" => {
                     f.seek(SeekFrom::Start(current_pos))?;

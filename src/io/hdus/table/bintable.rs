@@ -154,7 +154,7 @@ impl Data {
                         for byte in bytes {
                             string.push(byte as char);
                         }
-                        println!("String: {}", string);
+                        
                         data.push(string);
                     }
                     _ => panic!("Wrong data type"),

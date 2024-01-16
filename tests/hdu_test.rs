@@ -5,10 +5,11 @@ use astrors::io::hdus::utils::buffer_has_more_data;
 use astrors::io::hdulist::HDUList;
 use astrors::fits;
 
+
 use std::io::Result;
 
 #[cfg(test)]
-mod image_tests {
+mod hdu_tests {
     use std::{fs::File, io::{Write, Seek}};
     use astrors::io::{Header, hdus::image::ImageData};
 
@@ -27,6 +28,20 @@ mod image_tests {
 
         Ok(())
     }
+
+    #[test]
+    // fn read_other_fits() -> Result<()> {
+    //     let testfile = common::get_testdata_path("EUVEngc4151imgx.fits");
+        
+    //     let mut hdu_list = fits::fromfile(testfile.to_str().unwrap())?;
+
+    //     // let outfile = common::get_outtestdata_path("EUVEngc4151imgx_written_by_astrors.fits");
+    //     // hdu_list.write_to(outfile.to_str().unwrap())?;
+
+    //     println!("HDU List: {:?}", hdu_list.hdus.len());
+
+    //     Ok(())
+    // }
 
     #[test]
     fn read_primary_hdu() -> Result<()> {
@@ -76,4 +91,11 @@ mod image_tests {
 
         Ok(())
     }
+
+    #[test]
+    fn test(){
+
+    }
+
 }
+
