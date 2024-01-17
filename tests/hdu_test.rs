@@ -30,18 +30,18 @@ mod hdu_tests {
     }
 
     #[test]
-    // fn read_other_fits() -> Result<()> {
-    //     let testfile = common::get_testdata_path("EUVEngc4151imgx.fits");
+    fn read_other_fits() -> Result<()> {
+        let testfile = common::get_testdata_path("EUVEngc4151imgx.fits");
         
-    //     let mut hdu_list = fits::fromfile(testfile.to_str().unwrap())?;
+        let mut hdu_list = fits::fromfile(testfile.to_str().unwrap())?;
 
-    //     // let outfile = common::get_outtestdata_path("EUVEngc4151imgx_written_by_astrors.fits");
-    //     // hdu_list.write_to(outfile.to_str().unwrap())?;
+        let outfile = common::get_outtestdata_path("EUVEngc4151imgx_written_by_astrors.fits");
+        hdu_list.write_to(outfile.to_str().unwrap())?;
 
-    //     println!("HDU List: {:?}", hdu_list.hdus.len());
+        println!("HDU List: {:?}", hdu_list.hdus.len());
 
-    //     Ok(())
-    // }
+        Ok(())
+    }
 
     #[test]
     fn read_primary_hdu() -> Result<()> {

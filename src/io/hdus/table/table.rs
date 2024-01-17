@@ -149,16 +149,23 @@ pub fn read_tableinfo_from_header(header: &Header) -> Result<Vec<Column>, String
 }
 
 pub fn fill_columns_w_data(columns : &mut Vec<Column>, nrows: i64, file: &mut File) -> Result<(), std::io::Error> {
+    let mut bytes_read = 0;
     for row in 1..=nrows{
         for column in columns.iter_mut() {
             let (data_type, size) = get_tform_type_size(&column.tform);
     
             let mut buffer = vec![0; size + 1];
             file.read_exact(&mut buffer)?;
+            bytes_read += buffer.len();
             
             column.data.push(String::from_utf8_lossy(&buffer).trim_end().trim_start().to_string(), data_type);
         }
     }
+
+    // read from file until the end of the block
+    let mut buffer = vec![0; 2880 - (bytes_read % 2880)];
+    file.read_exact(&mut buffer)?;
+    bytes_read += buffer.len();
     Ok(())
 }
 

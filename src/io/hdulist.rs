@@ -44,7 +44,7 @@ impl HDUList {
         let mut hdulist = HDUList::new();
         let mut primary_hdu = true;
         loop {
-            println!("Reading HDU");
+            
             let hdu = HDU::read_from_file(&mut f, Some(primary_hdu));
             //TODO: implement own notimplemented error
             let hdu = match hdu {
@@ -114,7 +114,7 @@ impl HDU {
         
         let mut header = Header::new();
         header.read_from_file(&mut f)?;
-        header.pretty_print_advanced();
+        
         if primary_hdu.unwrap_or(false) {
             f.seek(SeekFrom::Start(current_pos))?;
             let primaryhdu = PrimaryHDU::read_from_file(&mut f)?;
