@@ -313,15 +313,21 @@ pub fn read_tableinfo_from_header(header: &Header) -> Result<Vec<Column>, String
 pub fn fill_columns_w_data(columns : &mut Vec<Column>, nrows: i64, file: &mut File) -> Result<(), std::io::Error> {
     let mut bytes_read = 0;
 
-    for row in 1..=nrows{
+    let bytes_per_row = calculate_number_of_bytes_of_row(columns);
+    let mut buffer = vec![0; bytes_per_row];
+    for row in 1..=nrows {
+        file.read_exact(&mut buffer)?; // Read once per row, this prevents overflow
+        bytes_read += buffer.len();
+        let mut bytes_read_row = 0;
         for column in columns.iter_mut() {
             let (data_type, size) = get_tform_type_size(&column.tform);
-    
-            let mut buffer = vec![0; size];
-            file.read_exact(&mut buffer)?;
-            bytes_read += buffer.len();
+            let mut buffer_column = vec![0; size];
+            for i in 0..size {
+                buffer_column[i] = buffer[bytes_read_row + i];
+            }
+            bytes_read_row += size;
 
-            column.data.push(buffer, data_type);
+            column.data.push(buffer_column, data_type);
         }
     }
     
@@ -477,6 +483,8 @@ pub fn columns_to_buffer(columns: Vec<Column>, file: &mut File) -> Result<(), st
     //buffer should be written in utf8
     let rows = columns[0].data.len();
     let mut bytes_written = 0;
+    let bytes_per_row = calculate_number_of_bytes_of_row(&columns);
+    
     for row in 0..rows {
         for column in columns.iter() {
             let (_, size) = get_tform_type_size(&column.tform);
