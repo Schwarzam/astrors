@@ -93,8 +93,10 @@ mod hdu_tests {
     }
 
     #[test]
-    fn test(){
-
+    fn test() -> Result<()>{
+        let mut hdu_list = fits::fromfile("/Users/gustavo/Downloads/SPLUS_DR4_stparam_SPHINX_v1.fits");
+        println!("Aqui");
+        Ok(())
     }
 
 }

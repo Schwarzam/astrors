@@ -273,7 +273,27 @@ pub struct Column {
     tform: String,
     tunit: Option<String>,
     tdisp: Option<String>,
+    char_type: char,
     data: Data,
+}
+
+impl Column {
+    pub fn new(ttype: String, tform: String, tunit: Option<String>, tdisp: Option<String>) -> Self {
+        let tform2 = tform.clone();
+        let column = Column {
+            ttype,
+            tform,
+            tunit,
+            tdisp,
+            char_type: tform2.chars().last().unwrap_or('A'),
+            data : Data::new(&tform2),
+        };
+        column
+    }
+
+    pub fn set_tform(&mut self, tform: String) {
+        self.char_type = self.tform.chars().last().unwrap_or('A');
+    }
 }
 
 pub fn read_tableinfo_from_header(header: &Header) -> Result<Vec<Column>, String> {
@@ -296,13 +316,7 @@ pub fn read_tableinfo_from_header(header: &Header) -> Result<Vec<Column>, String
         let tdisp = tdisp.map(|c| c.value.to_string());
 
         let tform2 = tform.clone();
-        let column = Column {
-            ttype,
-            tform,
-            tunit,
-            tdisp,
-            data : Data::new(&tform2),
-        };
+        let column = Column::new(ttype, tform, tunit, tdisp);
 
         columns.push(column);
     }
@@ -314,27 +328,30 @@ pub fn fill_columns_w_data(columns : &mut Vec<Column>, nrows: i64, file: &mut Fi
     let mut bytes_read = 0;
 
     let bytes_per_row = calculate_number_of_bytes_of_row(columns);
-    let mut buffer = vec![0; bytes_per_row];
-    for row in 1..=nrows {
-        file.read_exact(&mut buffer)?; // Read once per row, this prevents overflow
-        bytes_read += buffer.len();
+    let mut buffer = vec![0; bytes_per_row * nrows as usize];
+    file.read_exact(&mut buffer)?;
+
+    let mut buffer_column = Vec::new();
+    buffer.chunks(bytes_per_row).for_each(|row| {
         let mut bytes_read_row = 0;
+    
         for column in columns.iter_mut() {
             let (data_type, size) = get_tform_type_size(&column.tform);
-            let mut buffer_column = vec![0; size];
-            for i in 0..size {
-                buffer_column[i] = buffer[bytes_read_row + i];
-            }
+    
+            // Resize the buffer instead of creating a new one
+            buffer_column.resize(size, 0);
+    
+            // Use copy_from_slice for efficient copying
+            buffer_column.copy_from_slice(&row[bytes_read_row..bytes_read_row + size]);
             bytes_read_row += size;
-
-            column.data.push(buffer_column, data_type);
+    
+            column.data.push(buffer_column.clone(), data_type);
         }
-    }
+    });
     
     // read from file until the end of the block
-    let mut buffer = vec![0; 2880 - (bytes_read % 2880)];
+    let mut buffer = vec![0; 2880 - (buffer.len() % 2880)];
     file.read_exact(&mut buffer)?;
-    bytes_read += buffer.len();
 
     Ok(())
 }
@@ -342,6 +359,8 @@ pub fn fill_columns_w_data(columns : &mut Vec<Column>, nrows: i64, file: &mut Fi
 pub fn columns_to_polars(columns: Vec<Column>) -> Result<DataFrame, String> {
     let mut polars_columns: Vec<Series> = Vec::new();
     for column in columns {
+
+        //DEBUG: Delete this
         let series = match column.data {
             Data::L(data) => Series::new(&column.ttype, data),
             Data::X(data) => panic!("Bit column not supported"),
@@ -360,7 +379,9 @@ pub fn columns_to_polars(columns: Vec<Column>) -> Result<DataFrame, String> {
         polars_columns.push(series);
     }
 
+    println!("Polars columns: {:?}", polars_columns);
     let df = DataFrame::new(polars_columns).map_err(|e| e.to_string())?;
+    println!("DataFrame: {:?}", df);
     Ok(df)
 }
 
@@ -414,6 +435,7 @@ pub fn polars_to_columns(df: DataFrame) -> Result<Vec<Column>, std::io::Error> {
         let column = Column {
             ttype: series.name().to_string(),
             tform: "1A".to_string(),
+            char_type: 'A',
             tunit: None,
             tdisp: None,
             data,
