@@ -1,8 +1,9 @@
 use core::panic;
-use std::{fs::File, io::{Read, Write}};
+use std::{borrow::BorrowMut, fs::File, io::{Read, Write}, ops::Deref};
 
 use crate::io::{Header, header::card::Card, utils::pad_buffer_to_fits_block};
-use polars::prelude::*; // Polars library
+use polars::{lazy::dsl::col, prelude::*};
+use rayon::iter::{IntoParallelRefMutIterator, ParallelIterator}; // Polars library
 use crate::io::hdus::table::table_utils::*;
 
 #[derive(Debug, PartialEq)]
@@ -22,28 +23,42 @@ pub enum Data {
     Q(Vec<String>), // Array descriptor
 }
 
+macro_rules! struct_to_dataframe {
+    ($input:expr, [$($field:ident),+]) => {
+        {
+            // Extract the field values into separate vectors
+            $(let mut $field = Vec::new();)*
 
+            for e in $input.into_iter() {
+                $($field.push(e.$field);)*
+            }
+            df! {
+                $(stringify!($field) => $field,)*
+            }
+        }
+    };
+}
 
 impl Data {
-    pub fn new(tform : &str) -> Self {
+    pub fn new(tform : &str, size : i32) -> Self {
         let tform = tform.trim();
         let tform_type = tform.chars().last().unwrap_or('A');
         
         match tform_type {
-            'L' => Data::L(Vec::new()),
-            'X' => Data::X(Vec::new()),
-            'B' => Data::B(Vec::new()),
-            'I' => Data::I(Vec::new()),
-            'J' => Data::J(Vec::new()),
-            'K' => Data::K(Vec::new()),
-            'A' => Data::A(Vec::new()),
-            'E' => Data::E(Vec::new()),
-            'D' => Data::D(Vec::new()),
-            'C' => Data::C(Vec::new()),
-            'M' => Data::M(Vec::new()),
-            'P' => Data::P(Vec::new()),
-            'Q' => Data::Q(Vec::new()),
-            _ => Data::A(Vec::new()),
+            'L' => Data::L(vec![false; size as usize]),
+            'X' => Data::X(vec![0; size as usize]),
+            'B' => Data::B(vec![0; size as usize]),
+            'I' => Data::I(vec![0; size as usize]),
+            'J' => Data::J(vec![0; size as usize]),
+            'K' => Data::K(vec![0; size as usize]),
+            'A' => Data::A(vec![String::new(); size as usize]),
+            'E' => Data::E(vec![0.0; size as usize]),
+            'D' => Data::D(vec![0.0; size as usize]),
+            'C' => Data::C(vec![String::new(); size as usize]),
+            'M' => Data::M(vec![String::new(); size as usize]),
+            'P' => Data::P(vec![String::new(); size as usize]),
+            'Q' => Data::Q(vec![String::new(); size as usize]),
+            _ => Data::A(vec![String::new(); size as usize]),
         }
     }
 
@@ -99,6 +114,134 @@ impl Data {
             "P" => 8,
             "Q" => 16,
             _ => panic!("Wrong data type"),
+        }
+    }
+
+    pub fn write_on_idx(&mut self, bytes : &[u8], data_type : char, idx : i64){
+        match data_type {
+            'L' => {
+                // parse bytes to bool
+                match self {
+                    Data::L(data) => data[idx as usize] = bytes[0] != 0,
+                    _ => panic!("Wrong data type"),
+                }
+            }
+            'X' => {
+                // parse bytes to u8
+                match self {
+                    Data::X(data) => data[idx as usize] = bytes[0],
+                    _ => panic!("Wrong data type"),
+                }
+            }
+            'B' => {
+                // parse bytes to i8
+                match self {
+                    Data::B(data) => data[idx as usize] = bytes[0] as i8,
+                    _ => panic!("Wrong data type"),
+                }
+            }
+            'I' => {
+                // parse bytes to i16
+                match self {
+                    Data::I(data) => data[idx as usize] = i16::from_be_bytes([bytes[0], bytes[1]]),
+                    _ => panic!("Wrong data type"),
+                }
+            }
+            'J' => {
+                // parse bytes to i32
+                match self {
+                    Data::J(data) => data[idx as usize] = i32::from_be_bytes([bytes[0], bytes[1], bytes[2], bytes[3]]),
+                    _ => panic!("Wrong data type"),
+                }
+            }
+            'K' => {
+                // parse bytes to i64
+                match self {
+                    Data::K(data) => data[idx as usize] = i64::from_be_bytes([bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5], bytes[6], bytes[7]]),
+                    _ => panic!("Wrong data type"),
+                }
+            }
+            'A' => {
+                // parse bytes to String
+                match self {
+                    Data::A(data) => {
+                        let mut string = String::new();
+                        for byte in bytes {
+                            string.push(*byte as char);
+                        }
+                        data[idx as usize] = string;
+                    }
+                    _ => panic!("Wrong data type"),
+                }
+            }
+            'E' => {
+                // parse bytes to f32
+                match self {
+                    Data::E(data) => data[idx as usize] = f32::from_be_bytes([bytes[0], bytes[1], bytes[2], bytes[3]]),
+                    _ => panic!("Wrong data type"),
+                }
+            }
+            'D' => {
+                // parse bytes to f64
+                match self {
+                    Data::D(data) => data[idx as usize] = f64::from_be_bytes([bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5], bytes[6], bytes[7]]),
+                    _ => panic!("Wrong data type"),
+                }
+            }
+            'C' => {
+                // parse bytes to String
+                match self {
+                    Data::C(data) => {
+                        let mut string = String::new();
+                        for byte in bytes {
+                            string.push(*byte as char);
+                        }
+                        data[idx as usize] = string;
+                    }
+                    _ => panic!("Wrong data type"),
+                }
+            }
+            'M' => {
+                // parse bytes to String
+                match self {
+                    Data::M(data) => {
+                        let mut string = String::new();
+                        for byte in bytes {
+                            string.push(*byte as char);
+                        }
+                        data[idx as usize] = string;
+                    }
+                    _ => panic!("Wrong data type"),
+                }
+            }
+            'P' => {
+                // parse bytes to String
+                match self {
+                    Data::P(data) => {
+                        let mut string = String::new();
+                        for byte in bytes {
+                            string.push(*byte as char);
+                        }
+                        data[idx as usize] = string;
+                    }
+                    _ => panic!("Wrong data type"),
+                }
+            }
+            'Q' => {
+                // parse bytes to String
+                match self {
+                    Data::Q(data) => {
+                        let mut string = String::new();
+                        for byte in bytes {
+                            string.push(*byte as char);
+                        }
+                        data[idx as usize] = string;
+                    }
+                    _ => panic!("Wrong data type"),
+                }
+            }
+            _ => panic!("Wrong data type"),
+
         }
     }
 
@@ -273,20 +416,22 @@ pub struct Column {
     tform: String,
     tunit: Option<String>,
     tdisp: Option<String>,
+    start_address: Option<usize>,
     char_type: char,
     data: Data,
 }
 
 impl Column {
-    pub fn new(ttype: String, tform: String, tunit: Option<String>, tdisp: Option<String>) -> Self {
+    pub fn new(ttype: String, tform: String, tunit: Option<String>, tdisp: Option<String>, size: i32, start_address: usize) -> Self {
         let tform2 = tform.clone();
         let column = Column {
             ttype,
             tform,
             tunit,
             tdisp,
+            start_address: Some(start_address), 
             char_type: tform2.chars().last().unwrap_or('A'),
-            data : Data::new(&tform2),
+            data : Data::new(&tform2, size),
         };
         column
     }
@@ -298,8 +443,12 @@ impl Column {
 
 pub fn read_tableinfo_from_header(header: &Header) -> Result<Vec<Column>, String> {
     let mut columns: Vec<Column> = Vec::new();
+
+    let rows = header["NAXIS2"].value.as_int().unwrap_or(0);
     let tfields = header["TFIELDS"].value.as_int().unwrap_or(0);
     
+    let mut start_address = 0;
+
     for i in 1..=tfields {
         let ttype = header.get_card(&format!("TTYPE{}", i));
         let tform = header.get_card(&format!("TFORM{}", i));
@@ -316,8 +465,12 @@ pub fn read_tableinfo_from_header(header: &Header) -> Result<Vec<Column>, String
         let tdisp = tdisp.map(|c| c.value.to_string());
 
         let tform2 = tform.clone();
-        let column = Column::new(ttype, tform, tunit, tdisp);
-
+        
+        let (typ, size) = get_tform_type_size(&tform);
+        let column = Column::new(ttype, tform, tunit, tdisp, rows as i32, start_address);
+        
+        start_address += size;
+        
         columns.push(column);
     }
 
@@ -331,24 +484,17 @@ pub fn fill_columns_w_data(columns : &mut Vec<Column>, nrows: i64, file: &mut Fi
     let mut buffer = vec![0; bytes_per_row * nrows as usize];
     file.read_exact(&mut buffer)?;
 
-    let mut buffer_column = Vec::new();
-    buffer.chunks(bytes_per_row).for_each(|row| {
-        let mut bytes_read_row = 0;
-    
-        for column in columns.iter_mut() {
-            let (data_type, size) = get_tform_type_size(&column.tform);
-    
-            // Resize the buffer instead of creating a new one
-            buffer_column.resize(size, 0);
-    
-            // Use copy_from_slice for efficient copying
-            buffer_column.copy_from_slice(&row[bytes_read_row..bytes_read_row + size]);
-            bytes_read_row += size;
-    
-            column.data.push(buffer_column.clone(), data_type);
+    columns.par_iter_mut().for_each(|col| {
+        let (data_type, size) = get_tform_type_size(&col.tform);
+        // slice row by row the column position 
+
+        //Write the below vectorized
+        for row in 0..nrows {
+            let start_add = col.start_address.unwrap_or(0) + (row as usize * bytes_per_row);
+            col.data.write_on_idx(&buffer[start_add..start_add + size], data_type, row);
         }
     });
-    
+
     // read from file until the end of the block
     let mut buffer = vec![0; 2880 - (buffer.len() % 2880)];
     file.read_exact(&mut buffer)?;
@@ -359,7 +505,6 @@ pub fn fill_columns_w_data(columns : &mut Vec<Column>, nrows: i64, file: &mut Fi
 pub fn columns_to_polars(columns: Vec<Column>) -> Result<DataFrame, String> {
     let mut polars_columns: Vec<Series> = Vec::new();
     for column in columns {
-
         //DEBUG: Delete this
         let series = match column.data {
             Data::L(data) => Series::new(&column.ttype, data),
@@ -379,7 +524,6 @@ pub fn columns_to_polars(columns: Vec<Column>) -> Result<DataFrame, String> {
         polars_columns.push(series);
     }
 
-    println!("Polars columns: {:?}", polars_columns);
     let df = DataFrame::new(polars_columns).map_err(|e| e.to_string())?;
     println!("DataFrame: {:?}", df);
     Ok(df)
@@ -388,6 +532,7 @@ pub fn columns_to_polars(columns: Vec<Column>) -> Result<DataFrame, String> {
 pub fn polars_to_columns(df: DataFrame) -> Result<Vec<Column>, std::io::Error> {
     let mut columns: Vec<Column> = Vec::new();
     
+    let mut start_address = 0;
     for series in df.get_columns() {
         let data = match series.dtype() {
             DataType::Boolean => {
@@ -435,11 +580,13 @@ pub fn polars_to_columns(df: DataFrame) -> Result<Vec<Column>, std::io::Error> {
         let column = Column {
             ttype: series.name().to_string(),
             tform: "1A".to_string(),
+            start_address: Some(0),
             char_type: 'A',
             tunit: None,
             tdisp: None,
             data,
         };
+        
         columns.push(column);
     }
 
