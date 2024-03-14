@@ -1,9 +1,9 @@
 use core::panic;
-use std::{borrow::BorrowMut, fs::File, io::{Read, Write}, ops::Deref};
+use std::{fs::File, io::{Read, Write}};
 
 use crate::io::{Header, header::card::Card, utils::pad_buffer_to_fits_block};
-use polars::{lazy::dsl::col, prelude::*};
-use rayon::iter::{IntoParallelRefMutIterator, ParallelIterator}; // Polars library
+use polars::{frame::row, prelude::*};
+use rayon::iter::{IntoParallelIterator, IntoParallelRefIterator, IntoParallelRefMutIterator, ParallelIterator}; // Polars library
 use crate::io::hdus::table::table_utils::*;
 
 #[derive(Debug, PartialEq)]
@@ -21,22 +21,6 @@ pub enum Data {
     M(Vec<String>), // Double complex
     P(Vec<String>), // Array descriptor
     Q(Vec<String>), // Array descriptor
-}
-
-macro_rules! struct_to_dataframe {
-    ($input:expr, [$($field:ident),+]) => {
-        {
-            // Extract the field values into separate vectors
-            $(let mut $field = Vec::new();)*
-
-            for e in $input.into_iter() {
-                $($field.push(e.$field);)*
-            }
-            df! {
-                $(stringify!($field) => $field,)*
-            }
-        }
-    };
 }
 
 impl Data {
@@ -64,19 +48,19 @@ impl Data {
 
     pub fn max_len(&self) -> usize {
         match self {
-            Data::L(data) => data.iter().map(|x| x.to_string().len()).max().unwrap_or(0),
-            Data::X(data) => data.iter().map(|x| x.to_string().len()).max().unwrap_or(0),
-            Data::B(data) => data.iter().map(|x| x.to_string().len()).max().unwrap_or(0),
-            Data::I(data) => data.iter().map(|x| x.to_string().len()).max().unwrap_or(0),
-            Data::J(data) => data.iter().map(|x| x.to_string().len()).max().unwrap_or(0),
-            Data::K(data) => data.iter().map(|x| x.to_string().len()).max().unwrap_or(0),
-            Data::A(data) => data.iter().map(|x| x.len()).max().unwrap_or(0),
-            Data::E(data) => data.iter().map(|x| x.to_string().len()).max().unwrap_or(0),
-            Data::D(data) => data.iter().map(|x| x.to_string().len()).max().unwrap_or(0),
-            Data::C(data) => data.iter().map(|x| x.len()).max().unwrap_or(0),
-            Data::M(data) => data.iter().map(|x| x.len()).max().unwrap_or(0),
-            Data::P(data) => data.iter().map(|x| x.len()).max().unwrap_or(0),
-            Data::Q(data) => data.iter().map(|x| x.len()).max().unwrap_or(0),
+            Data::L(data) => data.par_iter().map(|x| x.to_string().len()).max().unwrap_or(0),
+            Data::X(data) => data.par_iter().map(|x| x.to_string().len()).max().unwrap_or(0),
+            Data::B(data) => data.par_iter().map(|x| x.to_string().len()).max().unwrap_or(0),
+            Data::I(data) => data.par_iter().map(|x| x.to_string().len()).max().unwrap_or(0),
+            Data::J(data) => data.par_iter().map(|x| x.to_string().len()).max().unwrap_or(0),
+            Data::K(data) => data.par_iter().map(|x| x.to_string().len()).max().unwrap_or(0),
+            Data::A(data) => data.par_iter().map(|x| x.len()).max().unwrap_or(0),
+            Data::E(data) => data.par_iter().map(|x| x.to_string().len()).max().unwrap_or(0),
+            Data::D(data) => data.par_iter().map(|x| x.to_string().len()).max().unwrap_or(0),
+            Data::C(data) => data.par_iter().map(|x| x.len()).max().unwrap_or(0),
+            Data::M(data) => data.par_iter().map(|x| x.len()).max().unwrap_or(0),
+            Data::P(data) => data.par_iter().map(|x| x.len()).max().unwrap_or(0),
+            Data::Q(data) => data.par_iter().map(|x| x.len()).max().unwrap_or(0),
         }
     }
 
@@ -417,12 +401,12 @@ pub struct Column {
     tunit: Option<String>,
     tdisp: Option<String>,
     start_address: Option<usize>,
-    char_type: char,
+    //char_type: char,
     data: Data,
 }
 
 impl Column {
-    pub fn new(ttype: String, tform: String, tunit: Option<String>, tdisp: Option<String>, size: i32, start_address: usize) -> Self {
+    pub fn new(ttype: String, tform: String, tunit: Option<String>, tdisp: Option<String>, prealloc_size: i32, start_address: usize) -> Self {
         let tform2 = tform.clone();
         let column = Column {
             ttype,
@@ -430,14 +414,10 @@ impl Column {
             tunit,
             tdisp,
             start_address: Some(start_address), 
-            char_type: tform2.chars().last().unwrap_or('A'),
-            data : Data::new(&tform2, size),
+            //char_type: tform2.chars().last().unwrap_or('A'),
+            data : Data::new(&tform2, prealloc_size),
         };
         column
-    }
-
-    pub fn set_tform(&mut self, tform: String) {
-        self.char_type = self.tform.chars().last().unwrap_or('A');
     }
 }
 
@@ -464,9 +444,7 @@ pub fn read_tableinfo_from_header(header: &Header) -> Result<Vec<Column>, String
         let tunit = tunit.map(|c| c.value.to_string());
         let tdisp = tdisp.map(|c| c.value.to_string());
 
-        let tform2 = tform.clone();
-        
-        let (typ, size) = get_tform_type_size(&tform);
+        let (_, size) = get_tform_type_size(&tform);
         let column = Column::new(ttype, tform, tunit, tdisp, rows as i32, start_address);
         
         start_address += size;
@@ -478,21 +456,20 @@ pub fn read_tableinfo_from_header(header: &Header) -> Result<Vec<Column>, String
 }
 
 pub fn fill_columns_w_data(columns : &mut Vec<Column>, nrows: i64, file: &mut File) -> Result<(), std::io::Error> {
-    let mut bytes_read = 0;
-
     let bytes_per_row = calculate_number_of_bytes_of_row(columns);
     let mut buffer = vec![0; bytes_per_row * nrows as usize];
     file.read_exact(&mut buffer)?;
 
     columns.par_iter_mut().for_each(|col| {
+        println!("Column: {:?}", col.tform);
         let (data_type, size) = get_tform_type_size(&col.tform);
         // slice row by row the column position 
 
         //Write the below vectorized
-        for row in 0..nrows {
+        (0..nrows).for_each(|row| {
             let start_add = col.start_address.unwrap_or(0) + (row as usize * bytes_per_row);
             col.data.write_on_idx(&buffer[start_add..start_add + size], data_type, row);
-        }
+        });
     });
 
     // read from file until the end of the block
@@ -508,7 +485,7 @@ pub fn columns_to_polars(columns: Vec<Column>) -> Result<DataFrame, String> {
         //DEBUG: Delete this
         let series = match column.data {
             Data::L(data) => Series::new(&column.ttype, data),
-            Data::X(data) => panic!("Bit column not supported"),
+            Data::X(_) => panic!("Bit column not supported"),
             Data::B(data) => Series::new(&column.ttype, data),
             Data::I(data) => Series::new(&column.ttype, data),
             Data::J(data) => Series::new(&column.ttype, data),
@@ -533,59 +510,62 @@ pub fn polars_to_columns(df: DataFrame) -> Result<Vec<Column>, std::io::Error> {
     let mut columns: Vec<Column> = Vec::new();
     
     let mut start_address = 0;
+    let mut char_type : char;
     for series in df.get_columns() {
         let data = match series.dtype() {
             DataType::Boolean => {
                 let data = series_to_vec_bool(series).unwrap();
-                Data::L(data)
+                Data::L(data);
+                char_type = 'L';    
             },
             DataType::UInt8 => {
                 let data = series_to_vec_u8(series).unwrap();
-                Data::X(data)
+                Data::X(data);
+                char_type = 'X';
             },
             DataType::Int8 => {
                 let data = series_to_vec_i8(series).unwrap();
-                Data::B(data)
+                Data::B(data);
+                char_type = 'B';
             },
             DataType::Int16 => {
                 let data = series_to_vec_i16(series).unwrap();
-                Data::I(data)
+                Data::I(data);
+                char_type = 'I';
             },
             DataType::Int32 => {
                 let data = series_to_vec_i32(series).unwrap();
-                Data::J(data)
+                Data::J(data);
+                char_type = 'J';
             },
             DataType::Int64 => {
                 let data = series_to_vec_i64(series).unwrap();
-                Data::K(data)
+                Data::K(data);
+                char_type = 'K';
             },
             DataType::Float32 => {
                 let data = series_to_vec_f32(series).unwrap();
-                Data::E(data)
+                Data::E(data);
+                char_type = 'E';
             },
             DataType::Float64 => {
                 let data = series_to_vec_f64(series).unwrap();
-                Data::D(data)
+                Data::D(data);
+                char_type = 'D';
             },
             DataType::String => {
                 let data = series_to_vec_string(series).unwrap();
-                Data::A(data)
+                Data::A(data);
+                char_type = 'A';
             },
             _ => {
                 let data = series_to_vec_string(series).unwrap();
-                Data::A(data)
+                Data::A(data);
+                char_type = 'A';
             }
         };
         
-        let column = Column {
-            ttype: series.name().to_string(),
-            tform: "1A".to_string(),
-            start_address: Some(0),
-            char_type: 'A',
-            tunit: None,
-            tdisp: None,
-            data,
-        };
+        let column = Column::new(series.name().to_string(), "1A".to_string(), None, None, 0 as i32, start_address);
         
         columns.push(column);
     }
@@ -651,10 +631,41 @@ pub fn create_table_on_header(header: &mut Header, columns: &Vec<Column>) {
 pub fn columns_to_buffer(columns: Vec<Column>, file: &mut File) -> Result<(), std::io::Error> {
     //buffer should be written in utf8
     let rows = columns[0].data.len();
-    let mut bytes_written = 0;
     let bytes_per_row = calculate_number_of_bytes_of_row(&columns);
-    
-    for row in 0..rows {
+    let mut bytes_written = bytes_per_row * rows;
+
+    // (0..nrows).flat_map( |row| {
+    //     for column in columns.iter() {
+    //         let (_, size) = get_tform_type_size(&column.tform);
+
+    //         let buffer = match &column.data {
+    //             Data::L(data) => data[row].to_string().into_bytes(),
+    //             Data::X(data) => data[row].to_string().into_bytes(),
+    //             Data::B(data) => data[row].to_be_bytes().to_vec(),
+    //             Data::I(data) => data[row].to_be_bytes().to_vec(),
+    //             Data::J(data) => data[row].to_be_bytes().to_vec(),
+    //             Data::K(data) => data[row].to_be_bytes().to_vec(),
+    //             Data::A(data) => {
+    //                 let mut string = data[row].clone();
+    //                 string.push_str(&" ".repeat(column.data.max_len() - data[row].len()));
+    //                 string.into_bytes()
+    //             },
+    //             Data::E(data) => data[row].to_be_bytes().to_vec(),
+    //             Data::D(data) => data[row].to_be_bytes().to_vec(),
+    //             Data::C(data) => data[row].clone().into_bytes(),
+    //             Data::M(data) => data[row].clone().into_bytes(),
+    //             Data::P(data) => data[row].clone().into_bytes(),
+    //             Data::Q(data) => data[row].clone().into_bytes(),
+    //         };
+        
+    //         // println!("Buffer: {:?}", String::from_utf8_lossy(&buffer));
+
+    //         //vect.par_iter().flat_map(|&item| item.to_be_bytes().to_vec()).collect::<Vec<u8>>();
+    //         file.write_all(&buffer);
+    //     }
+    // });
+
+    (0..rows).into_par_iter().for_each( |row| {
         for column in columns.iter() {
             let (_, size) = get_tform_type_size(&column.tform);
 
@@ -677,12 +688,14 @@ pub fn columns_to_buffer(columns: Vec<Column>, file: &mut File) -> Result<(), st
                 Data::P(data) => data[row].clone().into_bytes(),
                 Data::Q(data) => data[row].clone().into_bytes(),
             };
-            
-            bytes_written += buffer.len();
+        
             // println!("Buffer: {:?}", String::from_utf8_lossy(&buffer));
-            file.write_all(&buffer)?;
+
+            //vect.par_iter().flat_map(|&item| item.to_be_bytes().to_vec()).collect::<Vec<u8>>();
+            // file.write_all(&buffer);
         }
-    }
+    });
+
     pad_buffer_to_fits_block(file, bytes_written)?;
     Ok(())
 }
