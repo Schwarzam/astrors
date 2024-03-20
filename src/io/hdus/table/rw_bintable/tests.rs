@@ -3,7 +3,7 @@
 
 use polars_core::prelude::*;
 
-use crate::csv::CsvReader;
+use crate::io::hdus::table::rw_bintable::csv::CsvReader;
 use crate::SerReader;
 
 #[test]

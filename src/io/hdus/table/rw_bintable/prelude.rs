@@ -2,17 +2,12 @@
 use polars_core::prelude::*;
 
 #[cfg(feature = "csv")]
-pub use crate::csv::*;
-#[cfg(any(feature = "ipc", feature = "ipc_streaming"))]
-pub use crate::ipc::*;
-#[cfg(feature = "json")]
-pub use crate::json::*;
-#[cfg(feature = "json")]
-pub use crate::ndjson::core::*;
-#[cfg(feature = "parquet")]
-pub use crate::parquet::*;
-pub use crate::utils::*;
-pub use crate::{cloud, SerReader, SerWriter};
+pub use crate::io::hdus::table::rw_bintable::csv::*;
+
+pub use crate::io::hdus::table::rw_bintable::utils::*;
+pub use crate::io::hdus::table::rw_bintable::{SerReader, SerWriter};
+
+
 
 #[cfg(test)]
 pub(crate) fn create_df() -> DataFrame {

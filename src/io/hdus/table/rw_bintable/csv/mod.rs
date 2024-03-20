@@ -66,8 +66,8 @@ use serde::{Deserialize, Serialize};
 pub use write::{BatchedWriter, CsvWriter, QuoteStyle};
 pub use write_impl::SerializeOptions;
 
-use crate::csv::read_impl::CoreReader;
-use crate::mmap::MmapBytesReader;
-use crate::predicates::PhysicalIoExpr;
-use crate::utils::{get_reader_bytes, resolve_homedir};
-use crate::{RowIndex, SerReader, SerWriter};
+use crate::io::hdus::table::rw_bintable::csv::read_impl::CoreReader;
+use crate::io::hdus::table::rw_bintable::mmap::MmapBytesReader;
+use crate::io::hdus::table::rw_bintable::predicates::PhysicalIoExpr;
+use crate::io::hdus::table::rw_bintable::utils::{get_reader_bytes, resolve_homedir};
+use crate::io::hdus::table::rw_bintable::{RowIndex, SerReader, SerWriter};

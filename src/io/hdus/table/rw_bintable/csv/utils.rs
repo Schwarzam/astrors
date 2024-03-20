@@ -12,14 +12,14 @@ use polars_time::prelude::string::Pattern;
 use polars_utils::slice::GetSaferUnchecked;
 
 #[cfg(any(feature = "decompress", feature = "decompress-fast"))]
-use crate::csv::parser::next_line_position_naive;
-use crate::csv::parser::{next_line_position, skip_bom, skip_line_ending, SplitLines};
-use crate::csv::splitfields::SplitFields;
-use crate::csv::CsvEncoding;
-use crate::mmap::ReaderBytes;
-use crate::prelude::parser::is_comment_line;
-use crate::prelude::{CommentPrefix, NullValues};
-use crate::utils::{BOOLEAN_RE, FLOAT_RE, INTEGER_RE};
+use crate::io::hdus::table::rw_bintable::csv::parser::next_line_position_naive;
+use crate::io::hdus::table::rw_bintable::csv::parser::{next_line_position, skip_bom, skip_line_ending, SplitLines};
+use crate::io::hdus::table::rw_bintable::csv::splitfields::SplitFields;
+use crate::io::hdus::table::rw_bintable::csv::CsvEncoding;
+use crate::io::hdus::table::rw_bintable::mmap::ReaderBytes;
+use crate::io::hdus::table::rw_bintable::csv::parser::is_comment_line;
+use crate::io::hdus::table::rw_bintable::csv::read::{CommentPrefix, NullValues};
+use crate::io::hdus::table::rw_bintable::utils::{BOOLEAN_RE, FLOAT_RE, INTEGER_RE};
 
 pub(crate) fn get_file_chunks(
     bytes: &[u8],

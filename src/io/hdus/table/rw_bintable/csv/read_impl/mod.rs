@@ -15,11 +15,11 @@ use polars_time::prelude::*;
 use polars_utils::flatten;
 use rayon::prelude::*;
 
-use crate::csv::buffer::*;
-use crate::csv::parser::*;
-use crate::csv::read::{CommentPrefix, NullValuesCompiled};
-use crate::csv::utils::*;
-use crate::csv::{CsvEncoding, NullValues};
+use crate::io::hdus::table::rw_bintable::csv::buffer::*;
+use crate::io::hdus::table::rw_bintable::csv::parser::*;
+use crate::io::hdus::table::rw_bintable::csv::read::{CommentPrefix, NullValuesCompiled};
+use crate::io::hdus::table::rw_bintable::csv::utils::*;
+use crate::io::hdus::table::rw_bintable::csv::{CsvEncoding, NullValues};
 use crate::mmap::ReaderBytes;
 use crate::predicates::PhysicalIoExpr;
 use crate::utils::update_row_counts;

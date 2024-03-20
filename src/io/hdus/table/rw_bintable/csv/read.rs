@@ -1,9 +1,9 @@
 use super::*;
-use crate::csv::read_impl::{
+use crate::io::hdus::table::rw_bintable::csv::read_impl::{
     to_batched_owned_mmap, to_batched_owned_read, BatchedCsvReaderMmap, BatchedCsvReaderRead,
     OwnedBatchedCsvReader, OwnedBatchedCsvReaderMmap,
 };
-use crate::csv::utils::infer_file_schema;
+use crate::io::hdus::table::rw_bintable::csv::utils::infer_file_schema;
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]

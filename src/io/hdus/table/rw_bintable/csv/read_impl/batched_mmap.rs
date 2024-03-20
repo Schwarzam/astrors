@@ -1,9 +1,9 @@
 use std::collections::VecDeque;
 
 use super::*;
-use crate::csv::CsvReader;
-use crate::mmap::MmapBytesReader;
-use crate::prelude::update_row_counts2;
+use crate::io::hdus::table::rw_bintable::csv::CsvReader;
+use crate::io::hdus::table::rw_bintable::mmap::MmapBytesReader;
+use crate::io::hdus::table::rw_bintable::utils::update_row_counts2;
 
 #[allow(clippy::too_many_arguments)]
 pub(crate) fn get_file_chunks_iterator(

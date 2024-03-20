@@ -1,6 +1,5 @@
 
 pub mod export;
-pub mod lib;
 pub mod mmap;
 pub mod options;
 pub mod predicates;

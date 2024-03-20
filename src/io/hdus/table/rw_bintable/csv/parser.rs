@@ -1,7 +1,6 @@
 use std::path::PathBuf;
 
 use memchr::memchr2_iter;
-use num_traits::Pow;
 use polars_core::prelude::*;
 use polars_core::POOL;
 use polars_utils::index::Bounded;
@@ -9,11 +8,11 @@ use polars_utils::slice::GetSaferUnchecked;
 use rayon::prelude::*;
 
 use super::buffer::*;
-use crate::csv::read::NullValuesCompiled;
-use crate::csv::splitfields::SplitFields;
-use crate::csv::utils::get_file_chunks;
-use crate::csv::CommentPrefix;
-use crate::utils::get_reader_bytes;
+use crate::io::hdus::table::rw_bintable::csv::read::NullValuesCompiled;
+use crate::io::hdus::table::rw_bintable::csv::splitfields::SplitFields;
+use crate::io::hdus::table::rw_bintable::csv::utils::get_file_chunks;
+use crate::io::hdus::table::rw_bintable::csv::CommentPrefix;
+use crate::io::hdus::table::rw_bintable::utils::get_reader_bytes;
 
 /// Read the number of rows without parsing columns
 /// useful for count(*) queries

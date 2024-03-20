@@ -5,7 +5,7 @@ use once_cell::sync::Lazy;
 use polars_core::prelude::*;
 use regex::{Regex, RegexBuilder};
 
-use crate::mmap::{MmapBytesReader, ReaderBytes};
+use crate::io::hdus::table::rw_bintable::mmap::{MmapBytesReader, ReaderBytes};
 
 pub fn get_reader_bytes<'a, R: Read + MmapBytesReader + ?Sized>(
     reader: &'a mut R,

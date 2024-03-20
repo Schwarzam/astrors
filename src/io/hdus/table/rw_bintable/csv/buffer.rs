@@ -1,4 +1,4 @@
-use arrow::array::MutableBinaryViewArray;
+use polars_arrow::array::MutableBinaryViewArray;
 use polars_core::prelude::*;
 use polars_error::to_compute_err;
 #[cfg(any(feature = "dtype-datetime", feature = "dtype-date"))]
@@ -8,9 +8,9 @@ use polars_time::prelude::string::infer::{
     infer_pattern_single, DatetimeInfer, StrpTimeParser, TryFromWithUnit,
 };
 
-use crate::csv::parser::{is_whitespace, skip_whitespace};
-use crate::csv::utils::escape_field;
-use crate::csv::CsvEncoding;
+use crate::io::hdus::table::rw_bintable::csv::parser::{is_whitespace, skip_whitespace};
+use crate::io::hdus::table::rw_bintable::csv::utils::escape_field;
+use crate::io::hdus::table::rw_bintable::csv::CsvEncoding;
 
 pub(crate) trait PrimitiveParser: PolarsNumericType {
     fn parse(bytes: &[u8]) -> Option<Self::Native>;
