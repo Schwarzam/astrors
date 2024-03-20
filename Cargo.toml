@@ -19,7 +19,11 @@ ndarray = { version = "0.15.6", features = ["rayon"] }
 ndarray-stats = "0.5.1"
 memmap = "0.7"
 byteorder = "1.5.0"
-polars = { version = "0.36.2", features = ["lazy"] }
+polars = { version = "0.38.3", features = ["lazy"] }
+polars-core = { version = "0.38.3" }
+polars-error = { version = "0.38.3" }
 
 [build-dependencies]
 cc = "1.0.79"
+
+

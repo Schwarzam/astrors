@@ -5,7 +5,6 @@ pub mod hdulist;
 
 pub use self::header::Header;
 
-
 use std::os::raw::c_char;
 extern {
 
