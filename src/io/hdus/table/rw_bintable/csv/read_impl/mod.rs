@@ -20,10 +20,10 @@ use crate::io::hdus::table::rw_bintable::csv::parser::*;
 use crate::io::hdus::table::rw_bintable::csv::read::{CommentPrefix, NullValuesCompiled};
 use crate::io::hdus::table::rw_bintable::csv::utils::*;
 use crate::io::hdus::table::rw_bintable::csv::{CsvEncoding, NullValues};
-use crate::mmap::ReaderBytes;
-use crate::predicates::PhysicalIoExpr;
-use crate::utils::update_row_counts;
-use crate::RowIndex;
+use crate::io::hdus::table::rw_bintable::mmap::ReaderBytes;
+use crate::io::hdus::table::rw_bintable::predicates::PhysicalIoExpr;
+use crate::io::hdus::table::rw_bintable::utils::update_row_counts;
+use crate::io::hdus::table::rw_bintable::RowIndex;
 
 pub(crate) fn cast_columns(
     df: &mut DataFrame,

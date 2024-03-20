@@ -1,7 +1,6 @@
 #[cfg(test)]
 use polars_core::prelude::*;
 
-#[cfg(feature = "csv")]
 pub use crate::io::hdus::table::rw_bintable::csv::*;
 
 pub use crate::io::hdus::table::rw_bintable::utils::*;

@@ -4,8 +4,8 @@ use std::io::{Read, Seek, SeekFrom};
 
 use super::*;
 use crate::io::hdus::table::rw_bintable::csv::CsvReader;
-use crate::mmap::MmapBytesReader;
-use crate::prelude::update_row_counts2;
+use crate::io::hdus::table::rw_bintable::mmap::MmapBytesReader;
+use crate::io::hdus::table::rw_bintable::prelude::update_row_counts2;
 
 #[allow(clippy::too_many_arguments)]
 pub(crate) fn get_offsets(
@@ -424,7 +424,7 @@ mod test {
     use polars_core::utils::concat_df;
 
     use super::*;
-    use crate::SerReader;
+    use crate::io::hdus::table::rw_bintable::SerReader;
 
     #[test]
     fn test_read_io_reader() {

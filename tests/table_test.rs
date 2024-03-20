@@ -12,7 +12,6 @@ use astrors::io::hdus::tablehdu::TableHDU;
 mod tablehdu_tests {
     use std::{fs::File, io::{Write, Seek}, ops::Mul, fmt::Error};
     use astrors::io::hdus::{table::table::polars_to_columns, primaryhdu};
-    use polars::lazy::dsl::col;
 
     use super::*;
 

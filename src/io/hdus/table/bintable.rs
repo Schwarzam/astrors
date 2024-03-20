@@ -6,6 +6,8 @@ use polars::{frame::row, prelude::*};
 use rayon::iter::{IntoParallelIterator, IntoParallelRefIterator, IntoParallelRefMutIterator, ParallelIterator}; // Polars library
 use crate::io::hdus::table::table_utils::*;
 
+use polars::series::Series;
+
 #[derive(Debug, PartialEq)]
 pub enum Data {
     L(Vec<bool>), // Logical
@@ -481,25 +483,25 @@ pub fn fill_columns_w_data(columns : &mut Vec<Column>, nrows: i64, file: &mut Fi
 
 pub fn columns_to_polars(columns: Vec<Column>) -> Result<DataFrame, String> {
     let mut polars_columns: Vec<Series> = Vec::new();
-    for column in columns {
-        //DEBUG: Delete this
-        let series = match column.data {
-            Data::L(data) => Series::new(&column.ttype, data),
-            Data::X(_) => panic!("Bit column not supported"),
-            Data::B(data) => Series::new(&column.ttype, data),
-            Data::I(data) => Series::new(&column.ttype, data),
-            Data::J(data) => Series::new(&column.ttype, data),
-            Data::K(data) => Series::new(&column.ttype, data),
-            Data::A(data) => Series::new(&column.ttype, data),
-            Data::E(data) => Series::new(&column.ttype, data),
-            Data::D(data) => Series::new(&column.ttype, data),
-            Data::C(data) => Series::new(&column.ttype, data),
-            Data::M(data) => Series::new(&column.ttype, data),
-            Data::P(data) => Series::new(&column.ttype, data),
-            Data::Q(data) => Series::new(&column.ttype, data),
-        };
-        polars_columns.push(series);
-    }
+    // for column in columns {
+    //     //DEBUG: Delete this
+    //     let series = match column.data {
+    //         // Data::L(data) => Series::new(&column.ttype, data),
+    //         // Data::X(_) => panic!("Bit column not supported"),
+    //         // Data::B(data) => Series::new(&column.ttype, data),
+    //         // Data::I(data) => Series::new(&column.ttype, data),
+    //         // Data::J(data) => Series::new(&column.ttype, data),
+    //         // Data::K(data) => Series::new(&column.ttype, data),
+    //         // Data::A(data) => Series::new(&column.ttype, data),
+    //         // Data::E(data) => Series::new(&column.ttype, data),
+    //         // Data::D(data) => Series::new(&column.ttype, data),
+    //         // Data::C(data) => Series::new(&column.ttype, data),
+    //         // Data::M(data) => Series::new(&column.ttype, data),
+    //         // Data::P(data) => Series::new(&column.ttype, data),
+    //         // Data::Q(data) => Series::new(&column.ttype, data),
+    //     };
+    //     polars_columns.push(series);
+    // }
 
     let df = DataFrame::new(polars_columns).map_err(|e| e.to_string())?;
     println!("DataFrame: {:?}", df);

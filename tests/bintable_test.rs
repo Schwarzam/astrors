@@ -12,7 +12,6 @@ use astrors::io::hdus::bintablehdu::BinTableHDU;
 #[cfg(test)]
 mod tablehdu_tests {
     use std::{fs::File, io::{Write, Seek}, ops::Mul, fmt::Error};
-    use polars::lazy::dsl::col;
 
     use super::*;
 

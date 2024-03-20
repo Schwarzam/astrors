@@ -1,4 +1,4 @@
-use polars_arrow::array::MutableBinaryViewArray;
+use arrow::array::MutableBinaryViewArray;
 use polars_core::prelude::*;
 use polars_error::to_compute_err;
 #[cfg(any(feature = "dtype-datetime", feature = "dtype-date"))]

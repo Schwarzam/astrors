@@ -7,8 +7,8 @@ use polars_core::series::IsSorted;
 use polars_core::POOL;
 use rayon::prelude::*;
 
-use crate::utils::resolve_homedir;
-use crate::WriterFactory;
+use crate::io::hdus::table::rw_bintable::utils::resolve_homedir;
+use crate::io::hdus::table::rw_bintable::WriterFactory;
 
 /// partition_df must be created by the same way of partition_by
 fn resolve_partition_dir<I, S>(rootdir: &Path, by: I, partition_df: &DataFrame) -> PathBuf

@@ -285,7 +285,7 @@ pub(crate) fn get_line_stats(
     let mean = (n_read as f32) / (n_samples as f32);
     let mut std = 0.0;
     for &len in lengths.iter() {
-        std += (len as f32 - mean).pow(2.0)
+        std += (len as f32 - mean).powf(2.0)
     }
     std = (std / n_samples as f32).sqrt();
     Some((mean, std))

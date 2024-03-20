@@ -5,7 +5,6 @@ pub mod options;
 pub mod predicates;
 pub mod prelude;
 pub mod partition;
-pub mod pl_async;
 pub mod utils;
 
 pub mod csv;
@@ -26,6 +25,9 @@ use arrow::array::new_empty_array;
 pub use options::*;
 use polars_core::frame::ArrowChunk;
 use polars_core::prelude::*;
+
+use regex::Regex;
+use once_cell::sync::Lazy;
 
 #[cfg(any(feature = "ipc", feature = "avro", feature = "ipc_streaming",))]
 use crate::predicates::PhysicalIoExpr;
