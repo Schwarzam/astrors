@@ -39,21 +39,7 @@ mod tablehdu_tests {
 
     
 
-    pub enum DataBuffer {
-        L(Vec<bool>), // Logical
-        X(Vec<u8>), // Bit
-        B(Vec<i8>), // Byte
-        I(Vec<i16>), // Short
-        J(Vec<i32>), // Int
-        K(Vec<i64>), // Long
-        A(Vec<String>), // Char
-        E(Vec<f32>), // Float
-        D(Vec<f64>), // Double
-        C(Vec<String>), // Complex
-        M(Vec<String>), // Double complex
-        P(Vec<String>), // Array descriptor
-        Q(Vec<String>), // Array descriptor
-    }
+    
     
 
     
