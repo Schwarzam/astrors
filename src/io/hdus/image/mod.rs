@@ -1,4 +1,6 @@
-pub mod imageops;
+pub mod image;
 pub mod utils;
 
-pub use self::imageops::ImageData;
+pub use self::image::ImageData;
+
+pub mod imagehdu;

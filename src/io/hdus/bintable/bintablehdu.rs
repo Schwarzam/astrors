@@ -2,7 +2,7 @@ use std::fs::File;
 use std::io::Result;
 
 use polars::frame::DataFrame;
-use crate::io::hdus::table::bintable::*;
+use crate::io::hdus::bintable::bintable::*;
 
 use crate::io::Header;
 

@@ -2,6 +2,7 @@ mod utils;
 pub mod header;
 pub mod hdus;
 pub mod hdulist;
+pub mod datatypes;
 
 pub use self::header::Header;
 

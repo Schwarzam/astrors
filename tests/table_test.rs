@@ -6,7 +6,7 @@ use std::io::Result;
 
 use astrors::io::hdus::table::table::*;
 
-use astrors::io::hdus::tablehdu::TableHDU;
+use astrors::io::hdus::table::tablehdu::TableHDU;
 
 #[cfg(test)]
 mod tablehdu_tests {

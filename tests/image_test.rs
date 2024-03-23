@@ -1,7 +1,7 @@
 mod common;
 
 use astrors::io::Header;
-use astrors::io::hdus::image::imageops::{ImageParser, ImageData};
+use astrors::io::hdus::image::image::{ImageParser, ImageData};
 use std::io::Result;
 
 #[cfg(test)]

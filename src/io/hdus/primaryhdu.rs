@@ -4,7 +4,7 @@ use std::io::{Result, Seek};
 use crate::io::Header;
 use crate::io::hdus::image::ImageData;
 
-use crate::io::hdus::image::imageops::ImageParser;
+use crate::io::hdus::image::image::ImageParser;
 use crate::io::header::card::Card;
 use crate::io::utils::pad_buffer_to_fits_block;
 

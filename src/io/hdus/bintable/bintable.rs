@@ -1,8 +1,8 @@
 use core::panic;
-use std::{fs::File, io::{Read, Write}};
+use std::{fs::File, io::Read};
 
 use crate::io::{Header, header::card::Card, utils::pad_buffer_to_fits_block};
-use polars::{frame::row, prelude::*};
+use polars::prelude::*;
 use rayon::iter::{IntoParallelIterator, IntoParallelRefIterator, IntoParallelRefMutIterator, ParallelIterator}; // Polars library
 use crate::io::hdus::table::table_utils::*;
 

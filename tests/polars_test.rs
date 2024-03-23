@@ -1,23 +1,70 @@
 // use polars_core::prelude::*;
 
+use arrow::buffer;
+use polars::series::Series;
 
 #[cfg(test)]
+/// Module containing tests for the `tablehdu` module.
 mod tablehdu_tests {
     use polars::prelude::*;
-    use astrors::io::hdus::table::rw_bintable::{prelude::CsvReader, SerReader};
+    //use astrors::io::hdus::table::rw_bintable::{prelude::CsvReader, SerReader};
+
+    /// Splits a buffer into multiple segments of equal size.
+    ///
+    /// # Arguments
+    ///
+    /// * `buffer_size` - The size of the buffer.
+    /// * `n` - The number of segments to split the buffer into.
+    ///
+    /// # Returns
+    ///
+    /// A vector of tuples representing the start and end indices of each segment.
+    fn split_buffer(buffer_size: usize, n: u16) -> Vec<(usize, usize)> {
+        let mut limits = Vec::new();
+        let mut start: usize = 0;
+        let mut end: usize;
+
+        let nbufs = buffer_size / n as usize;
+        for i in 0..n {
+            if n - 1 == i {
+                end = buffer_size;
+            } else {
+                end = start + nbufs;
+            }
+            limits.push((start, end));
+            start = end;
+        }
+        limits
+    }
+
+    
+
+    pub enum DataBuffer {
+        L(Vec<bool>), // Logical
+        X(Vec<u8>), // Bit
+        B(Vec<i8>), // Byte
+        I(Vec<i16>), // Short
+        J(Vec<i32>), // Int
+        K(Vec<i64>), // Long
+        A(Vec<String>), // Char
+        E(Vec<f32>), // Float
+        D(Vec<f64>), // Double
+        C(Vec<String>), // Complex
+        M(Vec<String>), // Double complex
+        P(Vec<String>), // Array descriptor
+        Q(Vec<String>), // Array descriptor
+    }
+    
+
+    
 
     #[test]
-    fn test_tablehdu() -> PolarsResult<()> {
+    fn test_tablehdu() {
+        split_buffer(10000, 3);
 
-        let file_path = "/Users/gustavo/Downloads/SPLUS_DR4_stparam_SPHINX_v1.csv";
-        use std::path::PathBuf;
-        let path = PathBuf::from(file_path);
-        let df = CsvReader::from_path(path)?.finish()?;
-
-        // Print the first few rows of the DataFrame.
-        println!("{:?}", df.head(Some(5)));
-
-        Ok(())
-
+        let mut foo = Series::new("foo", &[1, 2, 3]);
+        // push a null
+        
+        
     }
 }

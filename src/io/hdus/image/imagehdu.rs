@@ -4,7 +4,7 @@ use std::io::Result;
 use crate::io::Header;
 use crate::io::hdus::image::ImageData;
 
-use crate::io::hdus::image::imageops::ImageParser;
+use crate::io::hdus::image::image::ImageParser;
 
 
 const MANDATORY_KEYWORDS: [&str; 3] = [

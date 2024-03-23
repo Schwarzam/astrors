@@ -6,9 +6,9 @@ use std::fs::File;
 use crate::io::header::Header;
 
 use crate::io::hdus::primaryhdu::PrimaryHDU;
-use crate::io::hdus::imagehdu::ImageHDU;
-use crate::io::hdus::bintablehdu::BinTableHDU;
-use crate::io::hdus::tablehdu::TableHDU;
+use crate::io::hdus::image::imagehdu::ImageHDU;
+use crate::io::hdus::bintable::bintablehdu::BinTableHDU;
+use crate::io::hdus::table::tablehdu::TableHDU;
 
 use crate::io::hdus::utils::buffer_has_more_data;
 
