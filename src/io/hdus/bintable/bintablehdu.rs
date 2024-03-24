@@ -33,17 +33,9 @@ impl BinTableHDU {
         header.read_from_file(&mut f)?;
         
         let mut columns = read_tableinfo_from_header(&header).unwrap();
-        let data = fill_columns_w_data(&mut columns, header["NAXIS2"].value.as_int().unwrap_or(0), &mut f);
+        let df = read_table_bytes_to_df(&mut columns, header["NAXIS2"].value.as_int().unwrap_or(0), &mut f);
 
-        let data = columns_to_polars(columns).unwrap();
-        // if !header.are_mandatory_keywords_first(&MANDATORY_KEYWORDS) {
-        //     // TODO: Return a proper error
-        //     // Err(std::io::Error::new(std::io::ErrorKind::Other, "Header corrupted"));
-        //     panic!("Header corrupted");
-        // }
-
-        // let data: ImageData = ImageParser::read_from_buffer(&mut f, &mut header)?;
-        Ok(Self::new(header, data))
+        Ok(Self::new(header, df?))
     }
 
     pub fn write_to_file(&mut self, mut f: &mut File) -> Result<()> {

@@ -1,10 +1,12 @@
 use core::panic;
 use std::{fs::File, io::Read};
 
-use crate::io::{Header, header::card::Card, utils::pad_buffer_to_fits_block};
+use crate::io::{hdus::bintable::buffer::ColumnDataBuffer, header::card::Card, utils::pad_buffer_to_fits_block, Header};
 use polars::prelude::*;
-use rayon::iter::{IntoParallelIterator, IntoParallelRefIterator, IntoParallelRefMutIterator, ParallelIterator}; // Polars library
+use rayon::{iter::{IntoParallelIterator, IntoParallelRefIterator, IntoParallelRefMutIterator, ParallelIterator}, str}; // Polars library
 use crate::io::hdus::table::table_utils::*;
+
+use crate::io::hdus::bintable::*;
 
 use polars::series::Series;
 
@@ -377,9 +379,7 @@ impl Data {
             Data::Q(data) => data.len(),
         }
     }
-
     //no need for max_len on bintable
-
 }
 
 fn get_tform_type_size(tform: &str) -> (char, usize) {
@@ -398,13 +398,33 @@ fn get_tform_type_size(tform: &str) -> (char, usize) {
 
 #[derive(Debug)]
 pub struct Column {
-    ttype: String, 
-    tform: String,
-    tunit: Option<String>,
-    tdisp: Option<String>,
-    start_address: Option<usize>,
-    //char_type: char,
-    data: Data,
+    pub ttype: String, 
+    pub tform: String,
+    pub tunit: Option<String>,
+    pub tdisp: Option<String>,
+    pub start_address: usize,
+    pub type_bytes : usize,
+    pub char_type: char,
+    pub data: Data,
+}
+
+pub fn byte_value_from_str(data_type : &str) -> usize {
+    match data_type {
+        "L" => 1,
+        "X" => 1,
+        "B" => 1,
+        "I" => 2,
+        "J" => 4,
+        "K" => 8,
+        "A" => 1,
+        "E" => 4,
+        "D" => 8,
+        "C" => 8,
+        "M" => 16,
+        "P" => 8,
+        "Q" => 16,
+        _ => panic!("Wrong data type"),
+    }
 }
 
 impl Column {
@@ -415,8 +435,9 @@ impl Column {
             tform,
             tunit,
             tdisp,
-            start_address: Some(start_address), 
-            //char_type: tform2.chars().last().unwrap_or('A'),
+            start_address: start_address, 
+            type_bytes: get_tform_type_size(&tform2).1,
+            char_type: get_tform_type_size(&tform2).0,
             data : Data::new(&tform2, prealloc_size),
         };
         column
@@ -457,55 +478,70 @@ pub fn read_tableinfo_from_header(header: &Header) -> Result<Vec<Column>, String
     Ok(columns)
 }
 
-pub fn fill_columns_w_data(columns : &mut Vec<Column>, nrows: i64, file: &mut File) -> Result<(), std::io::Error> {
+pub fn read_table_bytes_to_df(columns : &mut Vec<Column>, nrows: i64, file: &mut File) -> Result<DataFrame, std::io::Error> {
     let bytes_per_row = calculate_number_of_bytes_of_row(columns);
     let mut buffer = vec![0; bytes_per_row * nrows as usize];
+    
+    let n_chunks = 12;
+
     file.read_exact(&mut buffer)?;
 
-    columns.par_iter_mut().for_each(|col| {
-        println!("Column: {:?}", col.tform);
-        let (data_type, size) = get_tform_type_size(&col.tform);
-        // slice row by row the column position 
+    let bytes_per_row = calculate_number_of_bytes_of_row(&columns);
+        let buffer_size = nrows as usize * bytes_per_row;
+        let mut limits = split_buffer(buffer_size, n_chunks, bytes_per_row as u16);
+        
+        println!("Limits: {:?}", limits);
+        println!("Buffer size: {}", buffer_size);
 
-        //Write the below vectorized
-        (0..nrows).for_each(|row| {
-            let start_add = col.start_address.unwrap_or(0) + (row as usize * bytes_per_row);
-            col.data.write_on_idx(&buffer[start_add..start_add + size], data_type, row);
+        let mut buffer = vec![0; buffer_size];
+        file.read_exact(&mut buffer)?;
+        
+        use rayon::prelude::*;
+        //use rayon pool install
+        //let pool = rayon::ThreadPoolBuilder::new().num_threads(4).build().unwrap();
+        let pool = rayon::ThreadPoolBuilder::new().num_threads(4).build().unwrap();
+        let results : Vec<Result<DataFrame, std::io::Error>> = pool.install(|| {
+            limits.into_par_iter().map(|(start, end)| {
+                let local_buffer: &[u8] = &buffer[start..end];
+                let nbuffer_rows = (end - start) / bytes_per_row;
+
+
+                let mut local_buf_cols : Vec<ColumnDataBuffer> = Vec::new();
+                columns.iter().for_each(|column: &Column| {
+                    local_buf_cols.push(ColumnDataBuffer::new(&column.tform, nbuffer_rows as i32));
+                });
+                
+                (0..nbuffer_rows).into_iter().for_each(|i| {
+                    let mut offset = 0;
+                    let row = &local_buffer[offset..offset + bytes_per_row];
+
+                    columns.iter().enumerate().for_each(|(j, column)| {
+                        let buf_col = &mut local_buf_cols[j];
+                        let col_bytes = &row[column.start_address..column.start_address + column.type_bytes];
+                        buf_col.write_on_idx(col_bytes, column.char_type, i as i64);
+                        offset += column.type_bytes;
+                    });
+                });
+
+                let df_cols = columns.par_iter().enumerate().map(|(i, column)| {
+                    let buf_col = &local_buf_cols[i];
+                    buf_col.to_series(&column.ttype)
+                }).collect();
+
+                let mut local_df = unsafe { DataFrame::new_no_checks(df_cols) };
+                Ok(local_df)
+            }).collect()
         });
-    });
 
-    // read from file until the end of the block
-    let mut buffer = vec![0; 2880 - (buffer.len() % 2880)];
-    file.read_exact(&mut buffer)?;
+        let mut final_df = results[0].as_ref().unwrap().clone();
+        for i in 1..results.len() {
+            final_df.vstack_mut(&results[i].as_ref().unwrap());
+        }
 
-    Ok(())
-}
+        println!("Final DF: {}", final_df);
 
-pub fn columns_to_polars(columns: Vec<Column>) -> Result<DataFrame, String> {
-    let mut polars_columns: Vec<Series> = Vec::new();
-    // for column in columns {
-    //     //DEBUG: Delete this
-    //     let series = match column.data {
-    //         // Data::L(data) => Series::new(&column.ttype, data),
-    //         // Data::X(_) => panic!("Bit column not supported"),
-    //         // Data::B(data) => Series::new(&column.ttype, data),
-    //         // Data::I(data) => Series::new(&column.ttype, data),
-    //         // Data::J(data) => Series::new(&column.ttype, data),
-    //         // Data::K(data) => Series::new(&column.ttype, data),
-    //         // Data::A(data) => Series::new(&column.ttype, data),
-    //         // Data::E(data) => Series::new(&column.ttype, data),
-    //         // Data::D(data) => Series::new(&column.ttype, data),
-    //         // Data::C(data) => Series::new(&column.ttype, data),
-    //         // Data::M(data) => Series::new(&column.ttype, data),
-    //         // Data::P(data) => Series::new(&column.ttype, data),
-    //         // Data::Q(data) => Series::new(&column.ttype, data),
-    //     };
-    //     polars_columns.push(series);
-    // }
-
-    let df = DataFrame::new(polars_columns).map_err(|e| e.to_string())?;
-    println!("DataFrame: {:?}", df);
-    Ok(df)
+    println!("DataFrame: {:?}", final_df);
+    Ok(final_df)
 }
 
 pub fn polars_to_columns(df: DataFrame) -> Result<Vec<Column>, std::io::Error> {

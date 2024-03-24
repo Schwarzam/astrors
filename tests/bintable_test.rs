@@ -9,6 +9,7 @@ use astrors::io::hdus::bintable::bintable::*;
 
 use astrors::io::hdus::bintable::bintablehdu::BinTableHDU;
 
+
 #[cfg(test)]
 mod tablehdu_tests {
     use std::{fs::File, io::{Write, Seek}, ops::Mul, fmt::Error};
@@ -34,16 +35,14 @@ mod tablehdu_tests {
         let mut columns = read_tableinfo_from_header(&header).unwrap();
         println!("Columns: {:?}", columns);
         
-        let data = fill_columns_w_data(&mut columns, header["NAXIS2"].value.as_int().unwrap_or(0), &mut f);
+        let df = read_table_bytes_to_df(&mut columns, header["NAXIS2"].value.as_int().unwrap_or(0), &mut f);
         
-        let df = columns_to_polars(columns);
-
         //println!("DF: {:?}", df);
-        let columns = polars_to_columns(df.unwrap()).unwrap();
+        //let columns = polars_to_columns(df.unwrap()).unwrap();
         
         
-        let outfile = common::get_outtestdata_path("test_bintable.fits");
-        let mut outf = File::create(outfile)?;
+        //let outfile = common::get_outtestdata_path("test_bintable.fits");
+        //let mut outf = File::create(outfile)?;
         
         //create_table_on_header(&mut header, &columns);
 
@@ -64,17 +63,23 @@ mod tablehdu_tests {
     
         let end_pos = PrimaryHDU::get_end_byte_position(&mut f);
         
+
+
         //Seek end_pos 
         f.seek(std::io::SeekFrom::Start(end_pos as u64))?;
 
-        let mut bintable = BinTableHDU::read_from_file(&mut f)?;
+        let mut header = Header::new();
+        header.read_from_file(&mut f)?;
+
+        header.pretty_print_advanced();
+        // let mut bintable = BinTableHDU::read_from_file(&mut f)?;
         
-        //println!("Df {:} ", bintable.data);
+        // //println!("Df {:} ", bintable.data);
 
-        let outfile = common::get_outtestdata_path("test_bintable.fits");
-        let mut outf = File::create(outfile)?;
+        // let outfile = common::get_outtestdata_path("test_bintable.fits");
+        // let mut outf = File::create(outfile)?;
 
-        let mut primaryhdu = PrimaryHDU::default();
+        // let mut primaryhdu = PrimaryHDU::default();
         //primaryhdu.write_to_file(&mut outf)?;
         
         //bintable.write_to_file(&mut outf)?;
