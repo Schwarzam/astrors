@@ -59,12 +59,12 @@ mod tablehdu_tests {
     #[test]
     fn test_tablehdu() -> Result<()> {
         // Get CPUs count
-        let n_chunks = 20;
-        let n_threads = 6;
+        let n_chunks = 1;
+        let n_threads = 1;
         
-        let testfile = common::get_testdata_path("/Users/gustavo/Downloads/SPLUS_DR4_stparam_SPHINX_v1.fits");
+        // let testfile = common::get_testdata_path("/Users/gustavo/Downloads/SPLUS_DR4_stparam_SPHINX_v1.fits");
         
-        //let testfile = common::get_testdata_path("EUVEngc4151imgx.fits");
+        let testfile = common::get_testdata_path("EUVEngc4151imgx.fits");
         let mut f: File = File::open(testfile)?;
     
         let end_pos = PrimaryHDU::get_end_byte_position(&mut f);
@@ -89,11 +89,10 @@ mod tablehdu_tests {
         //use rayon pool install
         //let pool = rayon::ThreadPoolBuilder::new().num_threads(4).build().unwrap();
         let pool = rayon::ThreadPoolBuilder::new().num_threads(n_threads as usize).build().unwrap();
-        let results : Vec<DataFrame> = pool.install(|| {
+        let mut results : Vec<DataFrame> = pool.install(|| {
             limits.into_par_iter().map(|(start, end)| {
                 let local_buffer: &[u8] = &buffer[start..end];
                 let nbuffer_rows = (end - start) / bytes_per_row;
-
 
                 let mut local_buf_cols : Vec<ColumnDataBuffer> = Vec::new();
                 columns.iter().for_each(|column: &Column| {
@@ -102,7 +101,9 @@ mod tablehdu_tests {
                 
                 (0..nbuffer_rows).into_iter().for_each(|i| {
                     let mut offset = 0;
-                    let row = &local_buffer[offset..offset + bytes_per_row];
+                    let row_start_idx = start + i * bytes_per_row;
+
+                    let row = &local_buffer[row_start_idx + offset..row_start_idx + offset + bytes_per_row];
 
                     columns.iter().enumerate().for_each(|(j, column)| {
                         let buf_col = &mut local_buf_cols[j];
@@ -112,9 +113,11 @@ mod tablehdu_tests {
                     });
                 });
 
-                let df_cols = columns.par_iter().enumerate().map(|(i, column)| {
+                let df_cols = columns.iter().enumerate().map(|(i, column)| {
                     let buf_col = &local_buf_cols[i];
-                    buf_col.to_series(&column.ttype)
+                    let series = buf_col.to_series(&column.ttype);
+                    local_buf_cols[i].clear();
+                    series
                 }).collect();
 
                 let local_df = unsafe { DataFrame::new_no_checks(df_cols) };
@@ -125,9 +128,10 @@ mod tablehdu_tests {
         let mut final_df = results[0].clone();
         for i in 1..results.len() {
             final_df.vstack_mut(&results[i]);
+            // results.remove(i);
         }
 
-        //println!("Final DF: {}", final_df);
+        println!("Final DF: {}", final_df);
 
         Ok(())
     }

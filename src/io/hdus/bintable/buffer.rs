@@ -118,6 +118,24 @@ impl ColumnDataBuffer {
         series
     }
 
+    pub fn clear(&mut self){
+        match self {
+            ColumnDataBuffer::L(data) => data.clear(),
+            ColumnDataBuffer::X(data) => data.clear(),
+            ColumnDataBuffer::B(data) => data.clear(),
+            ColumnDataBuffer::I(data) => data.clear(),
+            ColumnDataBuffer::J(data) => data.clear(),
+            ColumnDataBuffer::K(data) => data.clear(),
+            ColumnDataBuffer::A(data) => data.clear(),
+            ColumnDataBuffer::E(data) => data.clear(),
+            ColumnDataBuffer::D(data) => data.clear(),
+            ColumnDataBuffer::C(data) => data.clear(),
+            ColumnDataBuffer::M(data) => data.clear(),
+            ColumnDataBuffer::P(data) => data.clear(),
+            ColumnDataBuffer::Q(data) => data.clear(),
+        }
+    }
+
     pub fn write_on_idx(&mut self, bytes : &[u8], data_type : char, idx : i64){
         match data_type {
             'L' => {

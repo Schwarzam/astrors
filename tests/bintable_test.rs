@@ -37,7 +37,7 @@ mod tablehdu_tests {
         
         let df = read_table_bytes_to_df(&mut columns, header["NAXIS2"].value.as_int().unwrap_or(0), &mut f);
         
-        //println!("DF: {:?}", df);
+        println!("DF: {:?}", df);
         //let columns = polars_to_columns(df.unwrap()).unwrap();
         
         
@@ -63,18 +63,16 @@ mod tablehdu_tests {
     
         let end_pos = PrimaryHDU::get_end_byte_position(&mut f);
         
-
-
         //Seek end_pos 
         f.seek(std::io::SeekFrom::Start(end_pos as u64))?;
 
         let mut header = Header::new();
         header.read_from_file(&mut f)?;
 
-        header.pretty_print_advanced();
-        // let mut bintable = BinTableHDU::read_from_file(&mut f)?;
+        //header.pretty_print_advanced();
+        let mut bintable = BinTableHDU::read_from_file(&mut f)?;
         
-        // //println!("Df {:} ", bintable.data);
+        println!("Df {:} ", bintable.data);
 
         // let outfile = common::get_outtestdata_path("test_bintable.fits");
         // let mut outf = File::create(outfile)?;
