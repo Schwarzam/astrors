@@ -36,7 +36,7 @@ pub fn byte_value_from_str(data_type : &str) -> usize {
     }
 }
 
-fn split_buffer(buffer_size: usize, n: u16, row_size: u16) -> Vec<(usize, usize)> {
+pub fn split_buffer(buffer_size: usize, n: u16, row_size: u16) -> Vec<(usize, usize)> {
     let mut limits = Vec::new();
     let mut start: usize = 0;
     let mut end: usize;

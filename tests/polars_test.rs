@@ -59,12 +59,12 @@ mod tablehdu_tests {
     #[test]
     fn test_tablehdu() -> Result<()> {
         // Get CPUs count
-        let n_chunks = 1;
-        let n_threads = 1;
+        let n_chunks = 8;
+        let n_threads = 8;
         
-        // let testfile = common::get_testdata_path("/Users/gustavo/Downloads/SPLUS_DR4_stparam_SPHINX_v1.fits");
+        let testfile = common::get_testdata_path("/Users/gustavo/Downloads/SPLUS_DR4_stparam_SPHINX_v1.fits");
         
-        let testfile = common::get_testdata_path("EUVEngc4151imgx.fits");
+        //let testfile = common::get_testdata_path("EUVEngc4151imgx.fits");
         let mut f: File = File::open(testfile)?;
     
         let end_pos = PrimaryHDU::get_end_byte_position(&mut f);
@@ -101,9 +101,9 @@ mod tablehdu_tests {
                 
                 (0..nbuffer_rows).into_iter().for_each(|i| {
                     let mut offset = 0;
-                    let row_start_idx = start + i * bytes_per_row;
+                    let row_start_idx = i * bytes_per_row;
 
-                    let row = &local_buffer[row_start_idx + offset..row_start_idx + offset + bytes_per_row];
+                    let row = &local_buffer[row_start_idx..row_start_idx + bytes_per_row];
 
                     columns.iter().enumerate().for_each(|(j, column)| {
                         let buf_col = &mut local_buf_cols[j];

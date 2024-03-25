@@ -92,13 +92,13 @@ mod hdu_tests {
         Ok(())
     }
 
-    // #[test]
-    // fn test() -> Result<()>{
-    //     let mut hdu_list = fits::fromfile("C:/Users/gusta/Downloads/SPLUS_DR4_stparam_SPHINX_v1.fits");
+    #[test]
+    fn test() -> Result<()>{
+        let mut hdu_list = fits::fromfile("/Users/gustavo/Downloads/SPLUS_DR4_stparam_SPHINX_v1.fits");
         
-    //     hdu_list?.write_to("C:/Users/gusta/Downloads/teste.fits")?;
-    //     Ok(())
-    // }
+        //hdu_list?.write_to("C:/Users/gusta/Downloads/teste.fits")?;
+        Ok(())
+    }
 
 }
 

@@ -101,9 +101,9 @@ impl ColumnDataBuffer {
     pub fn to_series(&self, col_name : &str) -> Series {
         let series = match self {
             ColumnDataBuffer::L(data) =>  Series::new(col_name, data),
-            ColumnDataBuffer::X(data) =>  panic!("Wrong data type"),
-            ColumnDataBuffer::B(data) =>  panic!("Wrong data type"),
-            ColumnDataBuffer::I(data) =>  panic!("Wrong data type"),
+            ColumnDataBuffer::X(data) =>  panic!("Not implemented data type"),
+            ColumnDataBuffer::B(data) =>  panic!("Not implemented data type"),
+            ColumnDataBuffer::I(data) =>  panic!("Not implemented data type"),
             ColumnDataBuffer::J(data) =>  Series::new(col_name, data),
             ColumnDataBuffer::K(data) =>  Series::new(col_name, data),
             ColumnDataBuffer::A(data) =>  Series::new(col_name, data),

@@ -14,12 +14,15 @@ use astrors::io::hdus::bintable::bintablehdu::BinTableHDU;
 mod tablehdu_tests {
     use std::{fs::File, io::{Write, Seek}, ops::Mul, fmt::Error};
 
+    use polars::chunked_array::ops::ChunkAgg;
+
     use super::*;
 
     #[test]
     fn read_bintablehdu() -> Result<()> {
         
-        let testfile = common::get_testdata_path("EUVEngc4151imgx.fits");
+        //let testfile = common::get_testdata_path("EUVEngc4151imgx.fits");
+        let testfile = common::get_testdata_path("/Users/gustavo/Downloads/SPLUS_DR4_stparam_SPHINX_v1.fits");
         let mut f: File = File::open(testfile)?;
     
         let end_pos = PrimaryHDU::get_end_byte_position(&mut f);
@@ -33,12 +36,16 @@ mod tablehdu_tests {
         header.read_from_file(&mut f)?;
         
         let mut columns = read_tableinfo_from_header(&header).unwrap();
-        println!("Columns: {:?}", columns);
+        // println!("Columns: {:?}", columns);
         
-        let df = read_table_bytes_to_df(&mut columns, header["NAXIS2"].value.as_int().unwrap_or(0), &mut f);
+        let df = read_table_bytes_to_df(&mut columns, header["NAXIS2"].value.as_int().unwrap_or(0), &mut f)?;
         
-        println!("DF: {:?}", df);
-        //let columns = polars_to_columns(df.unwrap()).unwrap();
+        // println!("DF: {:?}", df.get_column_names());
+        // Get mean of RA column
+        let mean = df.column("RA").unwrap().mean();
+        // println!("Mean RA: {:?}", mean);
+
+        let columns = polars_to_columns(df).unwrap();
         
         
         //let outfile = common::get_outtestdata_path("test_bintable.fits");
@@ -65,9 +72,6 @@ mod tablehdu_tests {
         
         //Seek end_pos 
         f.seek(std::io::SeekFrom::Start(end_pos as u64))?;
-
-        let mut header = Header::new();
-        header.read_from_file(&mut f)?;
 
         //header.pretty_print_advanced();
         let mut bintable = BinTableHDU::read_from_file(&mut f)?;

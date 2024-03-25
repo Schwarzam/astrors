@@ -1,12 +1,15 @@
 use core::panic;
+use std::char;
 use std::{fs::File, io::Read};
 
 use crate::io::{hdus::bintable::buffer::ColumnDataBuffer, header::card::Card, utils::pad_buffer_to_fits_block, Header};
 use crate::io::hdus::bintable::*;
 
 use polars::prelude::*;
+use rayon::iter::IntoParallelIterator;
 use crate::io::hdus::table::table_utils::*;
 
+extern crate num_cpus;
 
 fn get_tform_type_size(tform: &str) -> (char, usize) {
     let tform = tform.trim();
@@ -77,19 +80,19 @@ pub fn read_tableinfo_from_header(header: &Header) -> Result<Vec<Column>, String
     let mut start_address = 0;
 
     for i in 1..=tfields {
-        let ttype = header.get_card(&format!("TTYPE{}", i));
-        let tform = header.get_card(&format!("TFORM{}", i));
-        let tunit = header.get_card(&format!("TUNIT{}", i));
-        let tdisp = header.get_card(&format!("TDISP{}", i));
+        let ttype: Option<&Card> = header.get_card(&format!("TTYPE{}", i));
+        let tform: Option<&Card> = header.get_card(&format!("TFORM{}", i));
+        let tunit: Option<&Card> = header.get_card(&format!("TUNIT{}", i));
+        let tdisp: Option<&Card> = header.get_card(&format!("TDISP{}", i));
 
         if ttype.is_none() {
             break;
         }
 
-        let ttype = ttype.unwrap().value.to_string();
-        let tform = tform.unwrap().value.to_string();
-        let tunit = tunit.map(|c| c.value.to_string());
-        let tdisp = tdisp.map(|c| c.value.to_string());
+        let ttype: String = ttype.unwrap().value.to_string().trim_end().to_string();
+        let tform: String = tform.unwrap().value.to_string();
+        let tunit: Option<String> = tunit.map(|c| c.value.to_string());
+        let tdisp: Option<String> = tdisp.map(|c| c.value.to_string());
 
         let (_, size) = get_tform_type_size(&tform);
         let column = Column::new(ttype, tform, tunit, tdisp, rows as i32, start_address);
@@ -103,21 +106,27 @@ pub fn read_tableinfo_from_header(header: &Header) -> Result<Vec<Column>, String
 }
 
 pub fn read_table_bytes_to_df(columns : &mut Vec<Column>, nrows: i64, file: &mut File) -> Result<DataFrame, std::io::Error> {
+    let mut n_chunks: u16 = 1;
+    let mut n_threads: u16 = num_cpus::get() as u16;
 
-    let n_chunks = 1;
-
+    if nrows > n_threads as i64 * 10 {
+        n_chunks = n_threads;
+    }
+    else {
+        n_threads = 1;
+    }
 
     let bytes_per_row = calculate_number_of_bytes_of_row(&columns);
     let buffer_size = nrows as usize * bytes_per_row;
     let limits = split_buffer(buffer_size, n_chunks, bytes_per_row as u16);
-        
+
     let mut buffer = vec![0; buffer_size];
     file.read_exact(&mut buffer)?;
     
     use rayon::prelude::*;
     //use rayon pool install
     //let pool = rayon::ThreadPoolBuilder::new().num_threads(4).build().unwrap();
-    let pool = rayon::ThreadPoolBuilder::new().num_threads(1).build().unwrap();
+    let pool = rayon::ThreadPoolBuilder::new().num_threads(n_threads as usize).build().unwrap();
     let results : Vec<Result<DataFrame, std::io::Error>> = pool.install(|| {
         limits.into_par_iter().map(|(start, end)| {
             let local_buffer: &[u8] = &buffer[start..end];
@@ -130,9 +139,9 @@ pub fn read_table_bytes_to_df(columns : &mut Vec<Column>, nrows: i64, file: &mut
             
             (0..nbuffer_rows).into_iter().for_each(|i| {
                 let mut offset = 0;
-                let row_start_idx = start + i * bytes_per_row;
+                let row_start_idx = i * bytes_per_row;
 
-                let row = &local_buffer[row_start_idx + offset..row_start_idx + offset + bytes_per_row];
+                let row = &local_buffer[row_start_idx..row_start_idx + bytes_per_row];
 
                 columns.iter().enumerate().for_each(|(j, column)| {
                     let buf_col = &mut local_buf_cols[j];
@@ -141,7 +150,6 @@ pub fn read_table_bytes_to_df(columns : &mut Vec<Column>, nrows: i64, file: &mut
                     offset += column.type_bytes;
                 });
             });
-            
 
             let df_cols = columns.iter().enumerate().map(|(i, column)| {
                 let buf_col = &local_buf_cols[i];
@@ -150,7 +158,6 @@ pub fn read_table_bytes_to_df(columns : &mut Vec<Column>, nrows: i64, file: &mut
                 series
             }).collect();
 
-            
             let local_df = unsafe { DataFrame::new_no_checks(df_cols) };
             Ok(local_df)
         }).collect()
@@ -160,102 +167,82 @@ pub fn read_table_bytes_to_df(columns : &mut Vec<Column>, nrows: i64, file: &mut
     let mut final_df = results[0].as_ref().unwrap().clone();
 
     for i in 1..results.len() {
-        final_df.vstack_mut(&results[i].as_ref().unwrap()).unwrap_err();
+        final_df.vstack_mut(&results[i].as_ref().unwrap());
     }
 
     Ok(final_df)
 }
 
 pub fn polars_to_columns(df: DataFrame) -> Result<Vec<Column>, std::io::Error> {
-    let mut columns: Vec<Column> = Vec::new();
-    
     let mut start_address = 0;
-    let mut char_type : char;
+    let mut columns : Vec<Column> = Vec::new();
+
     for series in df.get_columns() {
-        let data = match series.dtype() {
+        let ttype = series.name();
+        
+        let tform = match series.dtype() {
             DataType::Boolean => {
-                let data = series_to_vec_bool(series).unwrap();
-                ColumnDataBuffer::L(data);
-                char_type = 'L';    
+                start_address += byte_value_from_str("L");
+                "L".to_string()
             },
             DataType::UInt8 => {
-                let data = series_to_vec_u8(series).unwrap();
-                ColumnDataBuffer::X(data);
-                char_type = 'X';
+                start_address += byte_value_from_str("X");
+                "X".to_string()
             },
             DataType::Int8 => {
-                let data = series_to_vec_i8(series).unwrap();
-                ColumnDataBuffer::B(data);
-                char_type = 'B';
+                start_address += byte_value_from_str("B");
+                "B".to_string()
             },
             DataType::Int16 => {
-                let data = series_to_vec_i16(series).unwrap();
-                ColumnDataBuffer::I(data);
-                char_type = 'I';
+                start_address += byte_value_from_str("I");
+                "I".to_string()
             },
             DataType::Int32 => {
-                let data = series_to_vec_i32(series).unwrap();
-                ColumnDataBuffer::J(data);
-                char_type = 'J';
+                start_address += byte_value_from_str("J");
+                "J".to_string()
             },
             DataType::Int64 => {
-                let data = series_to_vec_i64(series).unwrap();
-                ColumnDataBuffer::K(data);
-                char_type = 'K';
+                start_address += byte_value_from_str("K");
+                "K".to_string()
             },
             DataType::Float32 => {
-                let data = series_to_vec_f32(series).unwrap();
-                ColumnDataBuffer::E(data);
-                char_type = 'E';
+                start_address += byte_value_from_str("E");
+                "E".to_string()
             },
             DataType::Float64 => {
-                let data = series_to_vec_f64(series).unwrap();
-                ColumnDataBuffer::D(data);
-                char_type = 'D';
+                start_address += byte_value_from_str("D");
+                "D".to_string()
             },
             DataType::String => {
-                let data = series_to_vec_string(series).unwrap();
-                ColumnDataBuffer::A(data);
-                char_type = 'A';
+                start_address += byte_value_from_str("A");
+                
+                let data = series.str().unwrap();
+                let mut max_length = data.iter().map(|item| item.unwrap_or("").len()).max().unwrap();
+
+                //Max length should be even number
+                if max_length % 2 != 0 {
+                    max_length += 1 as usize;
+                }
+
+                format!("{}A", max_length)
             },
             _ => {
-                let data = series_to_vec_string(series).unwrap();
-                ColumnDataBuffer::A(data);
-                char_type = 'A';
+                panic!("Unsupported data type");
             }
         };
         
-        let column = Column::new(series.name().to_string(), "1A".to_string(), None, None, 0 as i32, start_address);
+        let column: Column = Column::new(
+            ttype.to_string(), 
+            tform, 
+            None, 
+            None, 
+            0, 
+            start_address
+        );
         columns.push(column);
     }
 
-    // for column in columns.iter_mut() {
-    //     let formatted_string;
-    //     let tform = match &column.data {
-    //         ColumnDataBuffer::L(_) => "L",
-    //         ColumnDataBuffer::X(_) => "X",
-    //         ColumnDataBuffer::B(_) => "B",
-    //         ColumnDataBuffer::I(_) => "I",
-    //         ColumnDataBuffer::J(_) => "J",
-    //         ColumnDataBuffer::K(_) => "K",
-    //         ColumnDataBuffer::A(data) => {
-    //             formatted_string = format!("{}A", column.data.max_len());
-    //             //formatted_string = format!("A48");
-    //             &formatted_string
-    //         },
-    //         ColumnDataBuffer::E(_) => "E",
-    //         ColumnDataBuffer::D(_) => "D",
-    //         ColumnDataBuffer::C(_) => "C",
-    //         ColumnDataBuffer::M(_) => "M",
-    //         ColumnDataBuffer::P(_) => "P",
-    //         ColumnDataBuffer::Q(_) => "Q",
-    //     };
-    //     column.tform = tform.to_string();
-        
-    //     let (_, size) = get_tform_type_size(&column.tform);
-    // }
-
-
+    println!("Columns: {:?}", columns);
     Ok(columns)
 }
 
@@ -274,7 +261,7 @@ pub fn create_table_on_header(header: &mut Header, columns: &Vec<Column>) {
     let num_bytes = calculate_number_of_bytes_of_row(columns);
     header.add_card(&Card::new("TFIELDS".to_string(), tfields.to_string(), Some("Number of fields per row".to_string())));
     header.add_card(&Card::new("NAXIS1".to_string(), num_bytes.to_string(), Some("Number of bytes in row".to_string())));
-    // header.add_card(&Card::new("NAXIS2".to_string(), columns[0].data.len().to_string(), Some("Number of rows".to_string())));
+    //header.add_card(&Card::new("NAXIS2".to_string(), columns[0].data.len().to_string(), Some("Number of rows".to_string())));
     for (i, column) in columns.iter().enumerate() {
         header.add_card(&Card::new(format!("TTYPE{}", i + 1), column.ttype.clone(), Some("Name of field".to_string())));
         header.add_card(&Card::new(format!("TFORM{}", i + 1), column.tform.clone(), Some("Format of field".to_string())));
