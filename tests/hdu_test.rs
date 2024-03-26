@@ -5,13 +5,17 @@ use astrors::io::hdus::utils::buffer_has_more_data;
 use astrors::io::hdulist::HDUList;
 use astrors::fits;
 
+use polars::series::Series;
+use polars::prelude::*;
+
+use astrors::io::hdus::bintable::bintablehdu::BinTableHDU;
 
 use std::io::Result;
 
 #[cfg(test)]
 mod hdu_tests {
     use std::{fs::File, io::{Write, Seek}};
-    use astrors::io::{Header, hdus::image::ImageData};
+    use astrors::io::{hdulist::HDU, hdus::image::ImageData, Header};
 
     use super::*;
 
@@ -70,8 +74,10 @@ mod hdu_tests {
         
         let mut primary_hdu = PrimaryHDU::read_from_file(&mut f)?;
         
-        let outfile = common::get_outtestdata_path("primary_hdu_test_modify.fits");
-        let mut f_out: File = File::create(outfile)?;
+        let outfile = common::get_outtestdata_path("test_modify.fits");
+        let mut f_out: File = File::create(&outfile)?;
+
+        let mut hdus = HDUList::new();
 
         use ndarray::{ArrayD, IxDyn};
         primary_hdu.data = 
@@ -79,22 +85,26 @@ mod hdu_tests {
                 ArrayD::from_elem(IxDyn(&[100, 100]), 1.0)
             );
 
-        primary_hdu.write_to_file(&mut f_out)?;
+        hdus.add_hdu(HDU::Primary(primary_hdu));
         //println!("Primary HDU: {:?}", primary_hdu.data);
         
-        println!("Has more data: {}", buffer_has_more_data(&mut f)?);
-        //header.pretty_print_advanced();
+        let df = DataFrame::new(vec![
+            Series::new("RA", vec![1, 2, 3, 4, 5]),
+            Series::new("DEC", vec![1, 2, 3, 4, 5]),
+            Series::new("MAG", vec![1, 2, 3, 4, 5]),
+        ]).unwrap();
         
-        //Reading the next header if more data is available
-        let mut header = Header::new();
-        
+        let mut bintable = BinTableHDU::new_data(df);
+        hdus.add_hdu(HDU::BinTable(bintable));
+
+        hdus.write_to(outfile.to_str().unwrap())?;
 
         Ok(())
     }
 
     #[test]
     fn test() -> Result<()>{
-        let mut hdu_list = fits::fromfile("/Users/gustavo/Downloads/SPLUS_DR4_stparam_SPHINX_v1.fits");
+        //let mut hdu_list = fits::fromfile("/Users/gustavo/Downloads/SPLUS_DR4_stparam_SPHINX_v1.fits");
         
         //hdu_list?.write_to("C:/Users/gusta/Downloads/teste.fits")?;
         Ok(())
