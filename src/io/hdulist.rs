@@ -106,11 +106,20 @@ impl fmt::Debug for HDU {
     }
 }
 
+/// Represents an HDU (Header Data Unit) in a FITS (Flexible Image Transport System) file.
 impl HDU {
+    /// Reads an HDU from a file.
+    ///
+    /// # Arguments
+    ///
+    /// * `f` - A mutable reference to a `File` object representing the FITS file.
+    /// * `primary_hdu` - An optional boolean value indicating whether the HDU is the primary HDU.
+    ///
+    /// # Returns
+    ///
+    /// Returns a `Result` containing the parsed HDU if successful, or an `std::io::Error` if an I/O error occurs.
     pub fn read_from_file(mut f: &mut File, primary_hdu: Option<bool>) -> Result<Self, std::io::Error> {
-        
         let current_pos = f.seek(SeekFrom::Current(0))?;
-        
         let mut header = Header::new();
         header.read_from_file(&mut f)?;
         
@@ -119,7 +128,7 @@ impl HDU {
             let primaryhdu = PrimaryHDU::read_from_file(&mut f)?;
             return Ok(HDU::Primary(primaryhdu))
 
-        }else if header.contains_key("XTENSION") {
+        } else if header.contains_key("XTENSION") {
             let mut hdu_type = header["XTENSION"].value.to_string();
             hdu_type.retain(|c| !c.is_whitespace());
             match hdu_type.as_str() {

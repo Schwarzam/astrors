@@ -1,5 +1,6 @@
 use std::{fs::File, io::{Seek, Write}};
 
+/// Writes the remainder of to reach `FITS_BLOCK_SIZE`.
 pub fn pad_buffer_to_fits_block<W: Write>(writer: &mut W, current_size: usize) -> std::io::Result<()> {
     const FITS_BLOCK_SIZE: usize = 2880;
     let remainder = current_size % FITS_BLOCK_SIZE;
@@ -11,6 +12,7 @@ pub fn pad_buffer_to_fits_block<W: Write>(writer: &mut W, current_size: usize) -
     }
 }
 
+/// Reads the remainder of to reach `FITS_BLOCK_SIZE`.
 pub fn pad_read_buffer_to_fits_block(file: &mut File, current_size: usize) -> std::io::Result<()> {
     const FITS_BLOCK_SIZE: usize = 2880;
     let remainder = current_size % FITS_BLOCK_SIZE;
