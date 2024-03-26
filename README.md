@@ -120,6 +120,14 @@ hdus.add_hdu(HDU::BinTable(bintable));
 
 This snippet creates a `DataFrame` with astronomical data, converts it to a binary table HDU, and adds it to an `HDUList` for writing to a FITS file.
 
-## Conclusion
+## Contributing to Development
 
-The `astrors` library offers Rust developers powerful tools for working with astronomical data in FITS format. By reading, modifying, and writing FITS files, as well as integrating with the `polars` library for tabular data, you can efficiently handle complex astronomical datasets.
+We welcome contributions from the community to help further develop and improve this library. Whether you're fixing bugs, adding new features, or improving documentation, your help is invaluable. Please feel free to submit pull requests or open issues on our GitHub repository. For major changes, please open an issue first to discuss what you would like to change.
+
+## Sponsorship
+
+If you find this library useful and would like to support its development, consider sponsoring the project. Your sponsorship can help with the maintenance of the project, the development of new features, and the improvement of the existing ones. For more information on how to sponsor, please visit our GitHub repository or contact us directly.
+
+## License
+
+This project is licensed under the BSD 3-Clause License - see the LICENSE file for details. The BSD 3-Clause License is a permissive license that allows for redistribution and use in source and binary forms, with or without modification, under certain conditions. This license is business-friendly and compatible with open source and commercial projects.
