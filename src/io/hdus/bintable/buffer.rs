@@ -1,5 +1,3 @@
-use std::borrow::Borrow;
-
 use rayon::prelude::*;
 use polars::{prelude::NamedFrom, series::Series};
 
@@ -101,9 +99,9 @@ impl ColumnDataBuffer {
     pub fn to_series(&self, col_name : &str) -> Series {
         let series = match self {
             ColumnDataBuffer::L(data) =>  Series::new(col_name, data),
-            ColumnDataBuffer::X(data) =>  panic!("Not implemented data type"),
-            ColumnDataBuffer::B(data) =>  panic!("Not implemented data type"),
-            ColumnDataBuffer::I(data) =>  panic!("Not implemented data type"),
+            ColumnDataBuffer::X(_data) =>  panic!("Not implemented data type"),
+            ColumnDataBuffer::B(_data) =>  panic!("Not implemented data type"),
+            ColumnDataBuffer::I(_data) =>  panic!("Not implemented data type"),
             ColumnDataBuffer::J(data) =>  Series::new(col_name, data),
             ColumnDataBuffer::K(data) =>  Series::new(col_name, data),
             ColumnDataBuffer::A(data) =>  Series::new(col_name, data),
@@ -112,8 +110,7 @@ impl ColumnDataBuffer {
             ColumnDataBuffer::C(data) =>  Series::new(col_name, data),
             ColumnDataBuffer::M(data) =>  Series::new(col_name, data),
             ColumnDataBuffer::P(data) =>  Series::new(col_name, data),  
-            ColumnDataBuffer::Q(data) =>  Series::new(col_name, data),
-            _ => panic!("Wrong data type"),
+            ColumnDataBuffer::Q(data) =>  Series::new(col_name, data)
         };
         series
     }
@@ -410,6 +407,7 @@ impl ColumnDataBuffer {
             ColumnDataBuffer::Q(data) => data.len(),
         }
     }
+
 
     //no need for max_len on bintable
 }

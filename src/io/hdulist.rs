@@ -55,13 +55,12 @@ impl HDUList {
                 }
             };
             primary_hdu = false;
-
-            println!("HDU: {:?}", hdu);
             hdulist.add_hdu(hdu);
 
             if !buffer_has_more_data(&mut f)? {
                 break;
             }
+            
         }
         Ok(hdulist)
     }

@@ -6,7 +6,6 @@ use crate::io::hdus::image::ImageData;
 
 use crate::io::hdus::image::image::ImageParser;
 use crate::io::header::card::Card;
-use crate::io::utils::pad_buffer_to_fits_block;
 
 
 const MANDATORY_KEYWORDS: [&str; 3] = [
@@ -84,11 +83,15 @@ impl PrimaryHDU {
 
     pub fn write_to_file(&mut self, mut f: &mut File) -> Result<()> {
         self.header.fix_header_w_mandatory_order(&MANDATORY_KEYWORDS);
-
+        
         //Check for shape of self.data and write NAXISn keywords
         ImageParser::write_image_header(&mut self.header, &self.data);
 
         self.header.write_to_buffer(&mut f)?;
+
+        if self.data.get_shape()[0] == 0 {
+            return Ok(());
+        }
         ImageParser::ndarray_to_buffer(&self.data, f)?;
         Ok(())
     }

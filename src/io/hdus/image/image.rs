@@ -141,42 +141,42 @@ impl ImageParser {
             // println!("Padding: {:?}", padding.len());
         }
 
-        ImageParser::image_buffer_to_ndarray(databuf, shape, bitpix) 
+        ImageParser::image_buffer_to_ndarray(&databuf, shape, bitpix) 
     }
 
-    pub fn image_buffer_to_ndarray(databuf: Vec<u8>, shape: Vec<usize>, bitpix: i32) -> Result<ImageData, std::io::Error>  {
+    pub fn image_buffer_to_ndarray(databuf: &Vec<u8>, shape: Vec<usize>, bitpix: i32) -> Result<ImageData, std::io::Error>  {
         match bitpix {
             8 => {
                 let mut vect: Vec<u8> = vec![0; databuf.len() / 1];
-                pre_bytes_to_u8_vec(databuf, &mut vect);
+                pre_bytes_to_u8_vec(&databuf, &mut vect);
                 let ndarray = vec_to_ndarray(vect, shape);
                 let data: ImageData = ImageData::U8(ndarray);
                 Ok(data)
             },
             16 => {
                 let mut vect: Vec<i16> = vec![0; databuf.len() / 2];
-                pre_bytes_to_i16_vec(databuf, &mut vect);
+                pre_bytes_to_i16_vec(&databuf, &mut vect);
                 let ndarray = vec_to_ndarray(vect, shape);
                 let data = ImageData::I16(ndarray);
                 Ok(data)
             },
             32 => {
                 let mut vect: Vec<i32> = vec![0; databuf.len() / 4];
-                pre_bytes_to_i32_vec(databuf, &mut vect);
+                pre_bytes_to_i32_vec(&databuf, &mut vect);
                 let ndarray = vec_to_ndarray(vect, shape);
                 let data = ImageData::I32(ndarray);
                 Ok(data)
             },
             -32 => {
                 let mut vect: Vec<f32> = vec![0.0; databuf.len() / 4];
-                pre_bytes_to_f32_vec(databuf, &mut vect);
+                pre_bytes_to_f32_vec(&databuf, &mut vect);
                 let ndarray: ArrayBase<ndarray::OwnedRepr<f32>, ndarray::Dim<ndarray::IxDynImpl>> = vec_to_ndarray(vect, shape);
                 let data = ImageData::F32(ndarray);
                 Ok(data)
             },
             -64 => {
                 let mut vect: Vec<f64> = vec![0.0; databuf.len() / 8];
-                pre_bytes_to_f64_vec(databuf, &mut vect);
+                pre_bytes_to_f64_vec(&databuf, &mut vect);
                 let ndarray = vec_to_ndarray(vect, shape);
                 let data = ImageData::F64(ndarray);
                 Ok(data)

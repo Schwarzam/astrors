@@ -3,6 +3,8 @@ pub mod bintable;
 pub mod bintablehdu;
 pub mod buffer;
 
+pub mod utils;
+
 pub fn get_tform_type_size(tform: &str) -> (char, usize) {
     let tform = tform.trim();
     
@@ -57,3 +59,4 @@ pub fn split_buffer(buffer_size: usize, n: u16, row_size: u16) -> Vec<(usize, us
     }
     limits
 }
+

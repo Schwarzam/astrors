@@ -46,7 +46,7 @@ pub fn bytes_to_f64_vec(bytes : &[u8]) -> Vec<f64> {
         .collect()
 }
 
-pub fn pre_bytes_to_f64_vec(bytes: Vec<u8>, output: &mut Vec<f64>) { // Preallocated vect
+pub fn pre_bytes_to_f64_vec(bytes: &Vec<u8>, output: &mut Vec<f64>) { // Preallocated vect
     assert!(output.len() * 8 <= bytes.len());
     output.par_iter_mut()
         .enumerate()
@@ -59,7 +59,7 @@ pub fn pre_bytes_to_f64_vec(bytes: Vec<u8>, output: &mut Vec<f64>) { // Prealloc
         });
 }
 
-pub fn pre_bytes_to_f32_vec(bytes: Vec<u8>, output: &mut Vec<f32>) {
+pub fn pre_bytes_to_f32_vec(bytes: &Vec<u8>, output: &mut Vec<f32>) {
     assert!(output.len() * 4 <= bytes.len());
     output.par_iter_mut()
         .enumerate()
@@ -71,7 +71,7 @@ pub fn pre_bytes_to_f32_vec(bytes: Vec<u8>, output: &mut Vec<f32>) {
         });
 }
 
-pub fn pre_bytes_to_u8_vec(bytes: Vec<u8>, output: &mut Vec<u8>) {
+pub fn pre_bytes_to_u8_vec(bytes: &Vec<u8>, output: &mut Vec<u8>) {
     assert!(output.len() <= bytes.len());
     output.par_iter_mut()
         .enumerate()
@@ -80,7 +80,7 @@ pub fn pre_bytes_to_u8_vec(bytes: Vec<u8>, output: &mut Vec<u8>) {
         });
 }
 
-pub fn pre_bytes_to_i16_vec(bytes: Vec<u8>, output: &mut Vec<i16>) {
+pub fn pre_bytes_to_i16_vec(bytes: &Vec<u8>, output: &mut Vec<i16>) {
     assert!(output.len() * 2 <= bytes.len());
     output.par_iter_mut()
         .enumerate()
@@ -92,7 +92,7 @@ pub fn pre_bytes_to_i16_vec(bytes: Vec<u8>, output: &mut Vec<i16>) {
         });
 }
 
-pub fn pre_bytes_to_i32_vec(bytes: Vec<u8>, output: &mut Vec<i32>) {
+pub fn pre_bytes_to_i32_vec(bytes: &Vec<u8>, output: &mut Vec<i32>) {
     assert!(output.len() * 4 <= bytes.len());
     output.par_iter_mut()
         .enumerate()

@@ -56,7 +56,7 @@ mod hdu_tests {
         primary_hdu.write_to_file(&mut f_out)?;
         //println!("Primary HDU: {:?}", primary_hdu.data);
         
-        println!("Has more data: {}", buffer_has_more_data(&mut f)?);
+        //println!("Has more data: {}", buffer_has_more_data(&mut f)?);
         //header.pretty_print_advanced();
         
         Ok(())

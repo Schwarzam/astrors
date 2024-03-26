@@ -1,5 +1,4 @@
 use polars::prelude::*; // Polars library
-use crate::io::Header;
 
 pub fn series_to_vec_bool(series: &Series) -> Result<Vec<bool>, PolarsError> {
     series.bool().map(|ca| ca.into_iter().collect::<Vec<Option<bool>>>()
@@ -73,40 +72,4 @@ pub fn series_to_vec_string(series: &Series) -> Result<Vec<String>, PolarsError>
         .map(|opt| opt.unwrap_or_default()) // Handle nulls
         .collect())
         .map_err(|e| e.into())
-}
-
-pub fn format_scientific<T>(num: T, max_len: usize) -> String 
-where
-    T: std::fmt::LowerExp + PartialEq + Into<f64>,
-{
-    let mut formatted = format!("{:.e}", num);
-    if formatted.contains("0e0"){
-        formatted = formatted.replace("0e0", "0.0");
-    }
-    formatted = formatted.replace("e", "E");
-    if formatted.len() > max_len {
-        formatted[..max_len].to_string()
-    } else {
-        formatted
-    }
-}
-
-pub fn clear_table_on_header(header: &mut Header) {
-    if header.get_card("TFIELDS").is_some(){
-        let tfields = header["TFIELDS"].value.as_int().unwrap_or(0);
-        for i in 1..=tfields {
-            header.remove(&format!("TTYPE{}", i));
-            header.remove(&format!("TFORM{}", i));
-            header.remove(&format!("TUNIT{}", i));
-            header.remove(&format!("TDISP{}", i));
-            header.remove(&format!("TBCOL{}", i));
-        }
-        header.remove("PCOUNT");
-        header.remove("GCOUNT");
-        header.remove("BITPIX");
-        header.remove("TFIELDS");
-        header.remove("NAXIS");
-        header.remove("NAXIS1");
-        header.remove("NAXIS2");
-    }
 }

@@ -33,7 +33,7 @@ impl TableHDU {
         header.read_from_file(&mut f)?;
         
         let mut columns = read_tableinfo_from_header(&header).unwrap();
-        let data = fill_columns_w_data(&mut columns, header["NAXIS2"].value.as_int().unwrap_or(0), &mut f);
+        //let data = fill_columns_w_data(&mut columns, header["NAXIS2"].value.as_int().unwrap_or(0), &mut f);
 
         let data = columns_to_polars(columns).unwrap();
         // if !header.are_mandatory_keywords_first(&MANDATORY_KEYWORDS) {

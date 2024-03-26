@@ -165,7 +165,8 @@ pub fn fill_columns_w_data(columns : &mut Vec<Column>, nrows: i64, file: &mut Fi
     // read from file until the end of the block
     let mut buffer = vec![0; 2880 - (bytes_read % 2880)];
     file.read_exact(&mut buffer)?;
-    bytes_read += buffer.len();
+    
+    
     Ok(())
 }
 
