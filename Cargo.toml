@@ -11,6 +11,8 @@ readme = "README.md"
 
 description = "Astronomical package to deal with FITS (compressed also) and WCS, still in development."
 
+include = ["/src", "LICENSE"]
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
