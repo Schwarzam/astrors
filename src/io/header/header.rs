@@ -57,6 +57,9 @@ impl Header {
     }
 
     pub fn add_card(&mut self, card: &Card) {
+        if self.get_card(&card.keyword).is_some() {
+            return;
+        }
         self.cards.push(card.clone());
     }
 

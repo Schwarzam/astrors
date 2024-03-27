@@ -37,25 +37,6 @@ pub struct Column {
     pub char_type: char,
 }
 
-pub fn byte_value_from_str(data_type : &str) -> usize {
-    match data_type {
-        "L" => 1,
-        "X" => 1,
-        "B" => 1,
-        "I" => 2,
-        "J" => 4,
-        "K" => 8,
-        "A" => 1,
-        "E" => 4,
-        "D" => 8,
-        "C" => 8,
-        "M" => 16,
-        "P" => 8,
-        "Q" => 16,
-        _ => panic!("Wrong data type"),
-    }
-}
-
 impl Column {
     pub fn new(ttype: String, tform: String, tunit: Option<String>, tdisp: Option<String>, start_address: usize) -> Self {
         let tform2 = tform.clone();
@@ -122,7 +103,7 @@ pub fn read_table_bytes_to_df(columns : &mut Vec<Column>, nrows: i64, file: &mut
     let mut buffer = vec![0; buffer_size];
     file.read_exact(&mut buffer)?;
     
-    use rayon::prelude::*;
+    
     //use rayon pool install
     //let pool = rayon::ThreadPoolBuilder::new().num_threads(4).build().unwrap();
     let pool = rayon::ThreadPoolBuilder::new().num_threads(n_threads as usize).build().unwrap();
@@ -137,15 +118,12 @@ pub fn read_table_bytes_to_df(columns : &mut Vec<Column>, nrows: i64, file: &mut
             });
             
             (0..nbuffer_rows).into_iter().for_each(|i| {
-                let mut offset = 0;
                 let row_start_idx = i * bytes_per_row;
                 let row = &local_buffer[row_start_idx..row_start_idx + bytes_per_row];
                 columns.iter().enumerate().for_each(|(j, column)| {
                     let buf_col = &mut local_buf_cols[j];
                     let col_bytes = &row[column.start_address..column.start_address + column.type_bytes];
-                    buf_col.write_on_idx(col_bytes, column.char_type, i as i64);
-                    offset += column.type_bytes;
-                });
+                    buf_col.write_on_idx(col_bytes, column.char_type, i as i64);                });
             });
 
             let df_cols = columns.iter().enumerate().map(|(i, column)| {
@@ -210,7 +188,7 @@ pub fn polars_to_columns(df: &DataFrame) -> Result<Vec<Column>, std::io::Error> 
                 "D".to_string()
             },
             DataType::String => {
-                let data = series.str().unwrap();
+                let data = &series.str().unwrap();
                 let mut max_length = data.iter().map(|item| item.unwrap_or("").len()).max().unwrap();
 
                 //Max length should be even number
@@ -295,7 +273,7 @@ pub fn df_to_buffer(columns: Vec<Column>, df: &DataFrame, file: &mut File) -> Re
             let mut local_buffer : Vec<u8> = vec![0x00; nbuffer_rows * bytes_per_row];
 
             columns.iter().for_each(|column| {
-                let series = local_df.column(&column.ttype).unwrap();
+                let series = &local_df.column(&column.ttype).unwrap();
 
                 match series.dtype() {
                     DataType::Boolean => {

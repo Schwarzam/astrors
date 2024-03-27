@@ -1,6 +1,6 @@
 [package]
 name = "astrors"
-version = "0.1.5"
+version = "0.1.6"
 authors = ["Gustavo Schwarz gustavo.b.schwarz@gmail.com", "Vincenzo Alberice alberice.vincenzo@gmail.com", "Thales Lopes thales.t.lopes@gmail.com"] # A list of the package authors
 edition = "2021"
 
