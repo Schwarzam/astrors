@@ -36,8 +36,21 @@ mod hdu_tests {
     #[test]
     fn read_other_fits() -> Result<()> {
         let testfile = common::get_testdata_path("EUVEngc4151imgx.fits");
-        
+
         let mut hdu_list = fits::fromfile(testfile.to_str().unwrap())?;
+
+        for hdu in hdu_list.hdus.iter() {
+
+            if let HDU::Primary(primary_hdu) = hdu {
+                println!("Primary HDU: {:?}", primary_hdu.data);
+            }
+
+            if let HDU::BinTable(image_hdu) = hdu {
+                println!("Bin table HDU: {:?}", image_hdu.data);
+            }
+
+            println!("HDU: {:?}", hdu)
+        }
 
         let outfile = common::get_outtestdata_path("EUVEngc4151imgx_written_by_astrors.fits");
         hdu_list.write_to(outfile.to_str().unwrap())?;
