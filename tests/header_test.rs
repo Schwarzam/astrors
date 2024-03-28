@@ -54,9 +54,14 @@ mod header_tests {
         header.remove("CTYPE2");
         println!("Len after remove {}", header.len());
         println!("Header empty {}", header.is_empty());
-        header.add_card(&Card::new("KEYWORD".to_string(), "1.392122".to_string(), None));
+        header.add_card(&Card::new("KEYWORD".to_string(), "1.394122".to_string(), None));
         println!("Float value {}", header["KEYWORD"].value.as_float().unwrap());
         println!("Len after newcard {}", header.len());
+        println!();
+        header.add_card_on_index(&Card::new("KEYWORD1".to_string(), "1.313222".to_string(), None), 212);
+        header.add_card(&Card::new("KEYWORD2".to_string(), "1.392122".to_string(), None));
+        header.add_card_after(&Card::new("KEYWORD3".to_string(), "1.323122".to_string(), None), "KEYWORD");
+        header.pretty_print();
         
         let output_test = common::get_outtestdata_path("header_modify_outtest.fits");
         let mut outfile: File = File::create(output_test)?;

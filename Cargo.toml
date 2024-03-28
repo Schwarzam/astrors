@@ -23,6 +23,7 @@ memmap = "0.7"
 byteorder = "1.5.0"
 polars = { version = "0.38.3" }
 num_cpus = "1.0"
+chrono = "0.4.35"
 
 
 [build-dependencies]

@@ -63,6 +63,23 @@ impl Header {
         self.cards.push(card.clone());
     }
 
+    pub fn add_card_on_index(&mut self, card: &Card, index: usize) {
+        if self.get_card(&card.keyword).is_some() {
+            return;
+        }
+        self.cards.insert(index, card.clone());
+    }
+
+    pub fn add_card_after(&mut self, card: &Card, keyword: &str) {
+        if self.get_card(&card.keyword).is_some() {
+            return;
+        }
+        let idx = self.cards.iter().position(|c| c.keyword == keyword);
+        if let Some(idx) = idx {
+            self.cards.insert(idx + 1, card.clone());
+        }
+    }
+
     pub fn get_card(&self, card_name: &str) -> Option<&Card> {
         self.cards.iter().find(|card| card.keyword == card_name)
     }
