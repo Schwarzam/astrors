@@ -1,5 +1,8 @@
+use num_cpus::get;
 use rayon::prelude::*;
 use polars::{prelude::NamedFrom, series::Series};
+
+use crate::io::hdus::bintable::*;
 
 #[derive(Debug, PartialEq)]
 pub enum ColumnDataBuffer {
@@ -21,9 +24,9 @@ pub enum ColumnDataBuffer {
 impl ColumnDataBuffer {
     pub fn new(tform : &str, size : i32) -> Self {
         let tform = tform.trim();
-        let tform_type = tform.chars().last().unwrap_or('A');
+        let (tform_type, _) = get_tform_type_size(tform);
         
-        match tform_type {
+        match tform_type.chars().next().unwrap() {
             'L' => ColumnDataBuffer::L(vec![false; size as usize]),
             'X' => ColumnDataBuffer::X(vec![0; size as usize]),
             'B' => ColumnDataBuffer::B(vec![0; size as usize]),
@@ -78,20 +81,20 @@ impl ColumnDataBuffer {
     }
 
     pub fn byte_value_from_str(data_type : &str) -> usize {
-        match data_type {
-            "L" => 1,
-            "X" => 1,
-            "B" => 1,
-            "I" => 2,
-            "J" => 4,
-            "K" => 8,
-            "A" => 1,
-            "E" => 4,
-            "D" => 8,
-            "C" => 8,
-            "M" => 16,
-            "P" => 8,
-            "Q" => 16,
+        match data_type.chars().next().unwrap() {
+            'L' => 1,
+            'X' => 1,
+            'B' => 1,
+            'I' => 2,
+            'J' => 4,
+            'K' => 8,
+            'A' => 1,
+            'E' => 4,
+            'D' => 8,
+            'C' => 8,
+            'M' => 16,
+            'P' => 8,
+            'Q' => 16,
             _ => panic!("Wrong data type"),
         }
     }
@@ -134,50 +137,50 @@ impl ColumnDataBuffer {
     }
 
     pub fn write_on_idx(&mut self, bytes : &[u8], data_type : &str, idx : i64){
-        match data_type {
-            "L" => {
+        match data_type.chars().next().unwrap() {
+            'L' => {
                 // parse bytes to bool
                 match self {
                     ColumnDataBuffer::L(data) => data[idx as usize] = bytes[0] != 0,
                     _ => panic!("Wrong data type"),
                 }
             }
-            "X" => {
+            'X' => {
                 // parse bytes to u8
                 match self {
                     ColumnDataBuffer::X(data) => data[idx as usize] = bytes[0],
                     _ => panic!("Wrong data type"),
                 }
             }
-            "B" => {
+            'B' => {
                 // parse bytes to i8
                 match self {
                     ColumnDataBuffer::B(data) => data[idx as usize] = bytes[0] as i8,
                     _ => panic!("Wrong data type"),
                 }
             }
-            "I" => {
+            'I' => {
                 // parse bytes to i16
                 match self {
                     ColumnDataBuffer::I(data) => data[idx as usize] = i16::from_be_bytes([bytes[0], bytes[1]]),
                     _ => panic!("Wrong data type"),
                 }
             }
-            "J" => {
+            'J' => {
                 // parse bytes to i32
                 match self {
                     ColumnDataBuffer::J(data) => data[idx as usize] = i32::from_be_bytes([bytes[0], bytes[1], bytes[2], bytes[3]]),
                     _ => panic!("Wrong data type"),
                 }
             }
-            "K" => {
+            'K' => {
                 // parse bytes to i64
                 match self {
                     ColumnDataBuffer::K(data) => data[idx as usize] = i64::from_be_bytes([bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5], bytes[6], bytes[7]]),
                     _ => panic!("Wrong data type"),
                 }
             }
-            "A" => {
+            'A' => {
                 // parse bytes to String
                 match self {
                     ColumnDataBuffer::A(data) => {
@@ -187,21 +190,21 @@ impl ColumnDataBuffer {
                     _ => panic!("Wrong data type"),
                 }
             }
-            "E" => {
+            'E' => {
                 // parse bytes to f32
                 match self {
                     ColumnDataBuffer::E(data) => data[idx as usize] = f32::from_be_bytes([bytes[0], bytes[1], bytes[2], bytes[3]]),
                     _ => panic!("Wrong data type"),
                 }
             }
-            "D" => {
+            'D' => {
                 // parse bytes to f64
                 match self {
                     ColumnDataBuffer::D(data) => data[idx as usize] = f64::from_be_bytes([bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5], bytes[6], bytes[7]]),
                     _ => panic!("Wrong data type"),
                 }
             }
-            "C" => {
+            'C' => {
                 // parse bytes to String
                 match self {
                     ColumnDataBuffer::C(data) => {
@@ -211,7 +214,7 @@ impl ColumnDataBuffer {
                     _ => panic!("Wrong data type"),
                 }
             }
-            "M" => {
+            'M' => {
                 // parse bytes to String
                 match self {
                     ColumnDataBuffer::M(data) => {
@@ -221,7 +224,7 @@ impl ColumnDataBuffer {
                     _ => panic!("Wrong data type"),
                 }
             }
-            "P" => {
+            'P' => {
                 // parse bytes to String
                 match self {
                     ColumnDataBuffer::P(data) => {
@@ -231,7 +234,7 @@ impl ColumnDataBuffer {
                     _ => panic!("Wrong data type"),
                 }
             }
-            "Q" => {
+            'Q' => {
                 // parse bytes to String
                 match self {
                     ColumnDataBuffer::Q(data) => {

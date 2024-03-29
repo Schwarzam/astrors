@@ -16,11 +16,10 @@ fn get_tform_type_size(tform: &str) -> (String, usize) {
     let re = Regex::new(r"1([PQ][A-Z])\((\d+)\)").unwrap();
     match re.captures(tform) {
         Some(caps) => {
-            println!("Captures: {:?}", caps);
             let tform_type =  &caps[1]; // Shows the matched two-letter sequence
-            //let size = &caps[2].parse::<usize>().unwrap(); // Shows the number inside the parentheses
-            let size = 0;
-            println!("Tform type: {:?}, Size: {:?}", tform_type, size);
+            let size = &caps[2].parse::<usize>().unwrap(); // Shows the number inside the parentheses
+            
+            println!("tform_type: {}, size: {}", tform_type, size);
             return (tform_type.to_string(), size.to_owned())
         },
         _ => {},
