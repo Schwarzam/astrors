@@ -5,18 +5,43 @@ pub mod buffer;
 
 pub mod utils;
 
-pub fn get_tform_type_size(tform: &str) -> (char, usize) {
+extern crate regex;
+use regex::Regex;
+
+fn get_tform_type_size(tform: &str) -> (String, usize) {
     let tform = tform.trim();
     
-    //return the last char of tform
-    let tform_type = tform.chars().last().unwrap_or('A');
-    let mut size = byte_value_from_str(&tform_type.to_string());
-    if tform_type == 'A' {
-        // The number is before the A like 48A or 8A
-        size = tform[0..tform.len()-1].parse::<usize>().unwrap_or(0);
+    
+    // capture array descriptor columns
+    let re = Regex::new(r"1([PQ][A-Z])\((\d+)\)").unwrap();
+    match re.captures(tform) {
+        Some(caps) => {
+            println!("Captures: {:?}", caps);
+            let tform_type =  &caps[1]; // Shows the matched two-letter sequence
+            //let size = &caps[2].parse::<usize>().unwrap(); // Shows the number inside the parentheses
+            let size = 0;
+            println!("Tform type: {:?}, Size: {:?}", tform_type, size);
+            return (tform_type.to_string(), size.to_owned())
+        },
+        _ => {},
     }
 
-    (tform_type, size)
+    let re = Regex::new(r"(\d+)?([A-Za-z])$").unwrap();
+    match re.captures(tform) {
+        Some(caps) => {
+            let tform_type = caps[2].to_string(); // Always capture the letter
+            let size = if tform_type == "A" {
+                caps.get(1).map_or(None, |m| m.as_str().parse::<usize>().ok()).unwrap()
+            } else {
+                byte_value_from_str(&tform_type)
+            };
+            return (tform_type, size)
+        },
+        _ => {},
+    }
+
+    panic!("No match found.");
+    
 }
 
 pub fn byte_value_from_str(data_type : &str) -> usize {

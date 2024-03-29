@@ -37,21 +37,21 @@ impl ColumnDataBuffer {
             'M' => ColumnDataBuffer::M(vec![String::new(); size as usize]),
             'P' => ColumnDataBuffer::P(vec![String::new(); size as usize]),
             'Q' => ColumnDataBuffer::Q(vec![String::new(); size as usize]),
-            _ => ColumnDataBuffer::A(vec![String::new(); size as usize]),
+            _   => ColumnDataBuffer::A(vec![String::new(); size as usize]),
         }
     }
 
     pub fn max_len(&self) -> usize {
         match self {
-            ColumnDataBuffer::L(data) => data.par_iter().map(|x| x.to_string().len()).max().unwrap_or(0),
-            ColumnDataBuffer::X(data) => data.par_iter().map(|x| x.to_string().len()).max().unwrap_or(0),
-            ColumnDataBuffer::B(data) => data.par_iter().map(|x| x.to_string().len()).max().unwrap_or(0),
-            ColumnDataBuffer::I(data) => data.par_iter().map(|x| x.to_string().len()).max().unwrap_or(0),
-            ColumnDataBuffer::J(data) => data.par_iter().map(|x| x.to_string().len()).max().unwrap_or(0),
-            ColumnDataBuffer::K(data) => data.par_iter().map(|x| x.to_string().len()).max().unwrap_or(0),
+            ColumnDataBuffer::L(data)   => data.par_iter().map(|x| x.to_string().len()).max().unwrap_or(0),
+            ColumnDataBuffer::X(data)     => data.par_iter().map(|x| x.to_string().len()).max().unwrap_or(0),
+            ColumnDataBuffer::B(data)     => data.par_iter().map(|x| x.to_string().len()).max().unwrap_or(0),
+            ColumnDataBuffer::I(data)    => data.par_iter().map(|x| x.to_string().len()).max().unwrap_or(0),
+            ColumnDataBuffer::J(data)    => data.par_iter().map(|x| x.to_string().len()).max().unwrap_or(0),
+            ColumnDataBuffer::K(data)    => data.par_iter().map(|x| x.to_string().len()).max().unwrap_or(0),
             ColumnDataBuffer::A(data) => data.par_iter().map(|x| x.len()).max().unwrap_or(0),
-            ColumnDataBuffer::E(data) => data.par_iter().map(|x| x.to_string().len()).max().unwrap_or(0),
-            ColumnDataBuffer::D(data) => data.par_iter().map(|x| x.to_string().len()).max().unwrap_or(0),
+            ColumnDataBuffer::E(data)    => data.par_iter().map(|x| x.to_string().len()).max().unwrap_or(0),
+            ColumnDataBuffer::D(data)    => data.par_iter().map(|x| x.to_string().len()).max().unwrap_or(0),
             ColumnDataBuffer::C(data) => data.par_iter().map(|x| x.len()).max().unwrap_or(0),
             ColumnDataBuffer::M(data) => data.par_iter().map(|x| x.len()).max().unwrap_or(0),
             ColumnDataBuffer::P(data) => data.par_iter().map(|x| x.len()).max().unwrap_or(0),
@@ -98,15 +98,15 @@ impl ColumnDataBuffer {
 
     pub fn to_series(&self, col_name : &str) -> Series {
         let series = match self {
-            ColumnDataBuffer::L(data) =>  Series::new(col_name, data),
-            ColumnDataBuffer::X(_data) =>  panic!("Not implemented data type"),
-            ColumnDataBuffer::B(_data) =>  panic!("Not implemented data type"),
-            ColumnDataBuffer::I(_data) =>  panic!("Not implemented data type"),
-            ColumnDataBuffer::J(data) =>  Series::new(col_name, data),
-            ColumnDataBuffer::K(data) =>  Series::new(col_name, data),
+            ColumnDataBuffer::L(data)   =>  Series::new(col_name, data),
+            ColumnDataBuffer::X(data)     =>  Series::new(col_name, data),
+            ColumnDataBuffer::B(data)     =>  Series::new(col_name, data),
+            ColumnDataBuffer::I(data)    =>  Series::new(col_name, data),
+            ColumnDataBuffer::J(data)    =>  Series::new(col_name, data),
+            ColumnDataBuffer::K(data)    =>  Series::new(col_name, data),
             ColumnDataBuffer::A(data) =>  Series::new(col_name, data),
-            ColumnDataBuffer::E(data) =>  Series::new(col_name, data),
-            ColumnDataBuffer::D(data) =>  Series::new(col_name, data),
+            ColumnDataBuffer::E(data)    =>  Series::new(col_name, data),
+            ColumnDataBuffer::D(data)    =>  Series::new(col_name, data),
             ColumnDataBuffer::C(data) =>  Series::new(col_name, data),
             ColumnDataBuffer::M(data) =>  Series::new(col_name, data),
             ColumnDataBuffer::P(data) =>  Series::new(col_name, data),  
@@ -117,15 +117,15 @@ impl ColumnDataBuffer {
 
     pub fn clear(&mut self){
         match self {
-            ColumnDataBuffer::L(data) => data.clear(),
-            ColumnDataBuffer::X(data) => data.clear(),
-            ColumnDataBuffer::B(data) => data.clear(),
-            ColumnDataBuffer::I(data) => data.clear(),
-            ColumnDataBuffer::J(data) => data.clear(),
-            ColumnDataBuffer::K(data) => data.clear(),
+            ColumnDataBuffer::L(data)   => data.clear(),
+            ColumnDataBuffer::X(data)     => data.clear(),
+            ColumnDataBuffer::B(data)     => data.clear(),
+            ColumnDataBuffer::I(data)    => data.clear(),
+            ColumnDataBuffer::J(data)    => data.clear(),
+            ColumnDataBuffer::K(data)    => data.clear(),
             ColumnDataBuffer::A(data) => data.clear(),
-            ColumnDataBuffer::E(data) => data.clear(),
-            ColumnDataBuffer::D(data) => data.clear(),
+            ColumnDataBuffer::E(data)    => data.clear(),
+            ColumnDataBuffer::D(data)    => data.clear(),
             ColumnDataBuffer::C(data) => data.clear(),
             ColumnDataBuffer::M(data) => data.clear(),
             ColumnDataBuffer::P(data) => data.clear(),
@@ -133,125 +133,109 @@ impl ColumnDataBuffer {
         }
     }
 
-    pub fn write_on_idx(&mut self, bytes : &[u8], data_type : char, idx : i64){
+    pub fn write_on_idx(&mut self, bytes : &[u8], data_type : &str, idx : i64){
         match data_type {
-            'L' => {
+            "L" => {
                 // parse bytes to bool
                 match self {
                     ColumnDataBuffer::L(data) => data[idx as usize] = bytes[0] != 0,
                     _ => panic!("Wrong data type"),
                 }
             }
-            'X' => {
+            "X" => {
                 // parse bytes to u8
                 match self {
                     ColumnDataBuffer::X(data) => data[idx as usize] = bytes[0],
                     _ => panic!("Wrong data type"),
                 }
             }
-            'B' => {
+            "B" => {
                 // parse bytes to i8
                 match self {
                     ColumnDataBuffer::B(data) => data[idx as usize] = bytes[0] as i8,
                     _ => panic!("Wrong data type"),
                 }
             }
-            'I' => {
+            "I" => {
                 // parse bytes to i16
                 match self {
                     ColumnDataBuffer::I(data) => data[idx as usize] = i16::from_be_bytes([bytes[0], bytes[1]]),
                     _ => panic!("Wrong data type"),
                 }
             }
-            'J' => {
+            "J" => {
                 // parse bytes to i32
                 match self {
                     ColumnDataBuffer::J(data) => data[idx as usize] = i32::from_be_bytes([bytes[0], bytes[1], bytes[2], bytes[3]]),
                     _ => panic!("Wrong data type"),
                 }
             }
-            'K' => {
+            "K" => {
                 // parse bytes to i64
                 match self {
                     ColumnDataBuffer::K(data) => data[idx as usize] = i64::from_be_bytes([bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5], bytes[6], bytes[7]]),
                     _ => panic!("Wrong data type"),
                 }
             }
-            'A' => {
+            "A" => {
                 // parse bytes to String
                 match self {
                     ColumnDataBuffer::A(data) => {
-                        let mut string = String::new();
-                        for byte in bytes {
-                            string.push(*byte as char);
-                        }
-                        string = string.trim_end().to_string();
+                        let string = unsafe { String::from_utf8_unchecked(bytes.to_vec()) }.trim_end().to_string();
                         data[idx as usize] = string;
                     }
                     _ => panic!("Wrong data type"),
                 }
             }
-            'E' => {
+            "E" => {
                 // parse bytes to f32
                 match self {
                     ColumnDataBuffer::E(data) => data[idx as usize] = f32::from_be_bytes([bytes[0], bytes[1], bytes[2], bytes[3]]),
                     _ => panic!("Wrong data type"),
                 }
             }
-            'D' => {
+            "D" => {
                 // parse bytes to f64
                 match self {
                     ColumnDataBuffer::D(data) => data[idx as usize] = f64::from_be_bytes([bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5], bytes[6], bytes[7]]),
                     _ => panic!("Wrong data type"),
                 }
             }
-            'C' => {
+            "C" => {
                 // parse bytes to String
                 match self {
                     ColumnDataBuffer::C(data) => {
-                        let mut string = String::new();
-                        for byte in bytes {
-                            string.push(*byte as char);
-                        }
+                        let string = unsafe { String::from_utf8_unchecked(bytes.to_vec()) }.trim_end().to_string();
                         data[idx as usize] = string;
                     }
                     _ => panic!("Wrong data type"),
                 }
             }
-            'M' => {
+            "M" => {
                 // parse bytes to String
                 match self {
                     ColumnDataBuffer::M(data) => {
-                        let mut string = String::new();
-                        for byte in bytes {
-                            string.push(*byte as char);
-                        }
+                        let string = unsafe { String::from_utf8_unchecked(bytes.to_vec()) }.trim_end().to_string();
                         data[idx as usize] = string;
                     }
                     _ => panic!("Wrong data type"),
                 }
             }
-            'P' => {
+            "P" => {
                 // parse bytes to String
                 match self {
                     ColumnDataBuffer::P(data) => {
-                        let mut string = String::new();
-                        for byte in bytes {
-                            string.push(*byte as char);
-                        }
+                        let string = unsafe { String::from_utf8_unchecked(bytes.to_vec()) }.trim_end().to_string();
                         data[idx as usize] = string;
                     }
                     _ => panic!("Wrong data type"),
                 }
             }
-            'Q' => {
+            "Q" => {
                 // parse bytes to String
                 match self {
                     ColumnDataBuffer::Q(data) => {
-                        let mut string = String::new();
-                        for byte in bytes {
-                            string.push(*byte as char);
-                        }
+                        let string = unsafe { String::from_utf8_unchecked(bytes.to_vec()) }.trim_end().to_string();
                         data[idx as usize] = string;
                     }
                     _ => panic!("Wrong data type"),

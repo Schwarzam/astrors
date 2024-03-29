@@ -12,19 +12,7 @@ use crate::io::hdus::table::table_utils::*;
 
 extern crate num_cpus;
 
-fn get_tform_type_size(tform: &str) -> (char, usize) {
-    let tform = tform.trim();
-    
-    //return the last char of tform
-    let tform_type = tform.chars().last().unwrap_or('A');
-    let mut size = byte_value_from_str(&tform_type.to_string());
-    if tform_type == 'A' {
-        // The number is before the A like 48A or 8A
-        size = tform[0..tform.len()-1].parse::<usize>().unwrap_or(0);
-    }
 
-    (tform_type, size)
-}
 
 #[derive(Debug)]
 pub struct Column {
@@ -34,7 +22,7 @@ pub struct Column {
     pub tdisp: Option<String>,
     pub start_address: usize,
     pub type_bytes : usize,
-    pub char_type: char,
+    pub type_letter: String,
 }
 
 impl Column {
@@ -47,7 +35,7 @@ impl Column {
             tdisp,
             start_address: start_address, 
             type_bytes: get_tform_type_size(&tform2).1,
-            char_type: get_tform_type_size(&tform2).0,
+            type_letter: get_tform_type_size(&tform2).0,
         };
         column
     }
@@ -123,7 +111,7 @@ pub fn read_table_bytes_to_df(columns : &mut Vec<Column>, nrows: i64, file: &mut
                 columns.iter().enumerate().for_each(|(j, column)| {
                     let buf_col = &mut local_buf_cols[j];
                     let col_bytes = &row[column.start_address..column.start_address + column.type_bytes];
-                    buf_col.write_on_idx(col_bytes, column.char_type, i as i64);                });
+                    buf_col.write_on_idx(col_bytes, &column.type_letter, i as i64);                });
             });
 
             let df_cols = columns.iter().enumerate().map(|(i, column)| {
@@ -197,6 +185,10 @@ pub fn polars_to_columns(df: &DataFrame) -> Result<Vec<Column>, std::io::Error> 
                 }
                 sum_to_address = max_length;
                 format!("{}A", max_length)
+            },
+            DataType::List(_) => {
+                //TODO: Not implemented yet
+                panic!("Unsupported data type");
             },
             _ => {
                 panic!("Unsupported data type");

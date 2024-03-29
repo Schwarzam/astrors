@@ -1,5 +1,5 @@
 use core::panic;
-use std::fmt::{Formatter, self};
+use std::fmt::{self, Debug, Formatter};
 use std::io::{self, Seek, SeekFrom};
 use std::fs::File;
 
@@ -15,6 +15,17 @@ use crate::io::hdus::utils::buffer_has_more_data;
 
 pub struct HDUList {
     pub hdus: Vec<HDU>,
+}
+
+impl Debug for HDUList{
+
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        self.hdus.iter().for_each(|hdu| {
+            write!(f, "{:?}", hdu).unwrap();
+        });
+        Ok(())
+    }
+    
 }
 
 
@@ -60,7 +71,6 @@ impl HDUList {
             if !buffer_has_more_data(&mut f)? {
                 break;
             }
-            
         }
         Ok(hdulist)
     }
@@ -69,9 +79,9 @@ impl HDUList {
         let mut f = File::create(filename)?;
         for hdu in &mut self.hdus {
             match hdu {
-                HDU::Primary(hdu) => hdu.write_to_file(&mut f)?,
-                HDU::Image(hdu) => hdu.write_to_file(&mut f)?,
-                HDU::Table(hdu) => hdu.write_to_file(&mut f)?,
+                HDU::Primary(hdu)   => hdu.write_to_file(&mut f)?,
+                HDU::Image(hdu)       => hdu.write_to_file(&mut f)?,
+                HDU::Table(hdu)       => hdu.write_to_file(&mut f)?,
                 HDU::BinTable(hdu) => hdu.write_to_file(&mut f)?,
             }
         }
