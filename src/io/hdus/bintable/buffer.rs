@@ -4,6 +4,8 @@ use polars::{prelude::NamedFrom, series::Series};
 
 use crate::io::hdus::bintable::*;
 
+
+
 #[derive(Debug, PartialEq)]
 pub enum ColumnDataBuffer {
     L(Vec<bool>), // Logical
@@ -17,8 +19,8 @@ pub enum ColumnDataBuffer {
     D(Vec<f64>), // Double
     C(Vec<String>), // Complex
     M(Vec<String>), // Double complex
-    P(Vec<String>), // Array descriptor
-    Q(Vec<String>), // Array descriptor
+    P(Vec<Vec<i32>>), // Array descriptor
+    Q(Vec<Vec<i64>>), // Array descriptor
 }
 
 impl ColumnDataBuffer {
@@ -38,8 +40,8 @@ impl ColumnDataBuffer {
             'D' => ColumnDataBuffer::D(vec![0.0; size as usize]),
             'C' => ColumnDataBuffer::C(vec![String::new(); size as usize]),
             'M' => ColumnDataBuffer::M(vec![String::new(); size as usize]),
-            'P' => ColumnDataBuffer::P(vec![String::new(); size as usize]),
-            'Q' => ColumnDataBuffer::Q(vec![String::new(); size as usize]),
+            'P' => ColumnDataBuffer::P(vec![vec![0; 2]; size as usize]),
+            'Q' => ColumnDataBuffer::Q(vec![vec![0; 2]; size as usize]),
             _   => ColumnDataBuffer::A(vec![String::new(); size as usize]),
         }
     }
@@ -112,8 +114,18 @@ impl ColumnDataBuffer {
             ColumnDataBuffer::D(data)    =>  Series::new(col_name, data),
             ColumnDataBuffer::C(data) =>  Series::new(col_name, data),
             ColumnDataBuffer::M(data) =>  Series::new(col_name, data),
-            ColumnDataBuffer::P(data) =>  Series::new(col_name, data),  
-            ColumnDataBuffer::Q(data) =>  Series::new(col_name, data)
+            ColumnDataBuffer::P(data) =>  {
+                let series_vec: Vec<Series> = data.into_iter().map(|vec| {
+                    Series::new("", &vec)
+                }).collect();
+                Series::new(col_name, series_vec)
+            },  
+            ColumnDataBuffer::Q(data) =>  {
+                let series_vec: Vec<Series> = data.into_iter().map(|vec| {
+                    Series::new("", &vec)
+                }).collect();
+                Series::new(col_name, series_vec)
+            }
         };
         series
     }
@@ -228,8 +240,8 @@ impl ColumnDataBuffer {
                 // parse bytes to String
                 match self {
                     ColumnDataBuffer::P(data) => {
-                        let string = unsafe { String::from_utf8_unchecked(bytes.to_vec()) }.trim_end().to_string();
-                        data[idx as usize] = string;
+                        data[idx as usize][0] = i32::from_be_bytes([bytes[0], bytes[1], bytes[2], bytes[3]]);
+                        data[idx as usize][1] = i32::from_be_bytes([bytes[4], bytes[5], bytes[6], bytes[7]]);
                     }
                     _ => panic!("Wrong data type"),
                 }
@@ -238,8 +250,8 @@ impl ColumnDataBuffer {
                 // parse bytes to String
                 match self {
                     ColumnDataBuffer::Q(data) => {
-                        let string = unsafe { String::from_utf8_unchecked(bytes.to_vec()) }.trim_end().to_string();
-                        data[idx as usize] = string;
+                        data[idx as usize][0] = i64::from_be_bytes([bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5], bytes[6], bytes[7]]);
+                        data[idx as usize][0] = i64::from_be_bytes([bytes[8], bytes[9], bytes[10], bytes[11], bytes[12], bytes[13], bytes[14], bytes[15]]);
                     }
                     _ => panic!("Wrong data type"),
                 }

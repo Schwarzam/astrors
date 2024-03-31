@@ -64,9 +64,9 @@ pub fn read_tableinfo_from_header(header: &Header) -> Result<Vec<Column>, String
 
         let (_, size) = get_tform_type_size(&tform);
         let column = Column::new(ttype, tform, tunit, tdisp, start_address);
-        
+
         start_address += size;
-        
+
         columns.push(column);
     }
 
