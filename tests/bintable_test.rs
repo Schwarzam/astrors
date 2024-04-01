@@ -36,7 +36,7 @@ mod tablehdu_tests {
         let mut columns = read_tableinfo_from_header(&header).unwrap();
         //println!("Columns: {:?}", columns);
         
-        let df = read_table_bytes_to_df(&mut columns, header["NAXIS2"].value.as_int().unwrap_or(0), &mut f)?;
+        let df = read_table_bytes_to_df(&mut columns, &header, &mut f)?;
         
         // println!("DF: {:?}", df.get_column_names());
         // Get mean of RA column
@@ -73,6 +73,31 @@ mod tablehdu_tests {
         println!("Df {:} ", bintable.data);
 
         let outfile = common::get_outtestdata_path("test_bintable.fits");
+        let mut outf = File::create(outfile)?;
+
+        let mut primaryhdu = PrimaryHDU::default();
+        primaryhdu.write_to_file(&mut outf)?;
+        bintable.write_to_file(&mut outf)?;
+
+        Ok(())
+    }
+
+    #[test]
+    pub fn arr_col_bintablehdu_test() -> Result<()> {
+        let testfile = common::get_testdata_path("test_array_lenght.fits");
+        let mut f: File = File::open(testfile)?;
+    
+        let end_pos = PrimaryHDU::get_end_byte_position(&mut f);
+        
+        //Seek end_pos 
+        f.seek(std::io::SeekFrom::Start(end_pos as u64))?;
+
+        //header.pretty_print_advanced();
+        let mut bintable = BinTableHDU::read_from_file(&mut f)?;
+        
+        println!("Df {:} ", bintable.data);
+
+        let outfile = common::get_outtestdata_path("arr_test_bintable.fits");
         let mut outf = File::create(outfile)?;
 
         let mut primaryhdu = PrimaryHDU::default();

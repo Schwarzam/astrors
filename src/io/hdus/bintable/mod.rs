@@ -4,58 +4,49 @@ pub mod bintablehdu;
 pub mod buffer;
 
 pub mod utils;
-pub mod listtype;
 
 extern crate regex;
 use regex::Regex;
 
-fn get_tform_type_size(tform: &str) -> (String, usize) {
-    let tform = tform.trim();
-    
-    // capture array descriptor columns
-    // let re = Regex::new(r"1([PQ][A-Z])\((\d+)\)").unwrap();
-    // match re.captures(tform) {
-    //     Some(caps) => {
-    //         let tform_type =  &caps[1]; // Shows the matched two-letter sequence
-    //         let size = &caps[2].parse::<usize>().unwrap(); // Shows the number inside the parentheses
-            
-    //         println!("tform_type: {}, size: {}", tform_type, size);
-    //         return (tform_type.to_string(), size.to_owned())
-    //     },
-    //     _ => {},
-    // }
-
-    let re = Regex::new(r"(\d+)?([A-Za-z]+)([^\\]*)$").unwrap();
-    match re.captures(tform) {
-        Some(caps) => {
-            let tform_type = caps[2].to_string(); // Always capture the letter
-            let size = if tform_type == "A" {
-                caps.get(1).map_or(None, |m| m.as_str().parse::<usize>().ok()).unwrap()
-            } else {
-                byte_value_from_str(&tform_type)
-            };
-            return (tform_type, size)
-        },
-        _ => {},
+pub fn get_first_letter(string : &str) -> &str {
+    let re = Regex::new(r"[A-Z]").unwrap();
+    if let Some(cap) = re.find(string) {
+        return &string[cap.range()];
     }
-    panic!("No match found.");
+    ""
+}
+
+pub fn get_data_bytes_size(string : &str) -> usize {
+    let re = Regex::new(r"^(\d*)?").unwrap();
+    let size = if let Some(cap) = re.find(string) {
+        let number = &string[cap.range()];
+        if number.is_empty() {
+            1
+        } else {
+            number.parse::<usize>().unwrap()
+        }
+    }else{
+        1
+    };
+
+    size * byte_value_from_str(string)
 }
 
 pub fn byte_value_from_str(data_type : &str) -> usize {
-    match data_type.chars().next().unwrap() {
-        'L' => 1,
-        'X' => 1,
-        'B' => 1,
-        'I' => 2,
-        'J' => 4,
-        'K' => 8,
-        'A' => 1,
-        'E' => 4,
-        'D' => 8,
-        'C' => 8,
-        'M' => 16,
-        'P' => 8,
-        'Q' => 16,
+    match get_first_letter(data_type) {
+        "L" => 1,
+        "X" => 1,
+        "B" => 1,
+        "I" => 2,
+        "J" => 4,
+        "K" => 8,
+        "A" => 1,
+        "E" => 4,
+        "D" => 8,
+        "C" => 8,
+        "M" => 16,
+        "P" => 8,
+        "Q" => 16,
         _ => panic!("Wrong data type"),
     }
 }

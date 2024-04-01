@@ -41,7 +41,7 @@ impl BinTableHDU {
         let mut header = Header::new();
         header.read_from_file(&mut f)?;
         let mut columns = read_tableinfo_from_header(&header).unwrap();
-        let df = read_table_bytes_to_df(&mut columns, header["NAXIS2"].value.as_int().unwrap_or(0), &mut f);
+        let df = read_table_bytes_to_df(&mut columns, &header, &mut f);
         Ok(Self::new(header, df?))
     }
 
