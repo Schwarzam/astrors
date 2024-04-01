@@ -99,6 +99,20 @@ impl Buffer {
         }
     }
 
+    pub fn read_var_len_cols(&mut self){
+        //TODO
+        
+        match &mut self.buffer {
+            BufferTypes::Scalar(data) => {
+                println!("buffer: {:?}", data);
+            },
+            BufferTypes::Vector(data) => {
+                
+            },
+        }
+
+    }
+
 
 }
 
@@ -119,6 +133,24 @@ impl ColumnArrayBuffer {
             _   => panic!("Unsupported data type for array col"),
         }
     }
+
+    pub fn empty(tform : &str) -> Self {
+        let tform = tform.trim();
+        let tform_type = get_first_letter(tform);
+
+        match tform_type {
+            "L" => ColumnArrayBuffer::L(vec![vec![]]),
+            "X" => ColumnArrayBuffer::X(vec![vec![]]),
+            "B" => ColumnArrayBuffer::B(vec![vec![]]),
+            "I" => ColumnArrayBuffer::I(vec![vec![]]),
+            "J" => ColumnArrayBuffer::J(vec![vec![]]),
+            "K" => ColumnArrayBuffer::K(vec![vec![]]),
+            "E" => ColumnArrayBuffer::E(vec![vec![]]),
+            "D" => ColumnArrayBuffer::D(vec![vec![]]),
+            _   => panic!("Unsupported data type for array col"),
+        }
+    }
+
 
     pub fn to_series(&self, col_name : &str) -> Series {
         let series = match self {

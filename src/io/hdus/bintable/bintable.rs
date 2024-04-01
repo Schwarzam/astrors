@@ -92,6 +92,20 @@ pub fn read_table_bytes_to_df(columns : &mut Vec<Column>, header: &Header, file:
     file.read_exact(&mut buffer)?;
     
     //TODO read suplemental data here
+    if header.get_card("THEAP").is_some(){
+        // Skip theap bytes
+        let theap = header.get_card("THEAP").unwrap().value.as_int().unwrap();
+        let mut theap_buffer = vec![0; theap as usize];
+        file.read_exact(&mut theap_buffer)?;
+        drop(theap_buffer);
+    }
+    let mut pcount_buffer;
+    if header.get_card("PCOUNT").is_some(){
+        // Skip pcount bytes
+        let pcount = header.get_card("PCOUNT").unwrap().value.as_int().unwrap();
+        pcount_buffer = vec![0; pcount as usize];
+        file.read_exact(&mut pcount_buffer)?;
+    }
 
 
     //use rayon pool install
@@ -117,6 +131,10 @@ pub fn read_table_bytes_to_df(columns : &mut Vec<Column>, header: &Header, file:
             });
 
             let df_cols = columns.iter().enumerate().map(|(i, column)| {
+                if (get_first_letter(&column.tform) == "P") | (get_first_letter(&column.tform) == "Q") {
+                    &local_buf_cols[i].read_var_len_cols();
+                }
+                
                 let buf_col = &local_buf_cols[i];
                 let series = buf_col.to_series(&column.ttype);
                 local_buf_cols[i].clear();
