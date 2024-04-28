@@ -282,13 +282,14 @@ pub fn create_table_on_header(header: &mut Header, columns: &Vec<Column>, nrows:
     clear_table_on_header(header);
     let tfields = columns.len();
     let num_bytes = calculate_number_of_bytes_of_row(columns);
-    header.add_card(&Card::new("BITPIX".to_string(), 8.to_string(), Some("Table BITPIX".to_string())));
-    header.add_card(&Card::new("TFIELDS".to_string(), tfields.to_string(), Some("Number of fields per row".to_string())));
-    header.add_card(&Card::new("NAXIS".to_string(), 2.to_string(), Some("2D table".to_string())));
-    header.add_card(&Card::new("NAXIS1".to_string(), num_bytes.to_string(), Some("Number of bytes in row".to_string())));
-    header.add_card(&Card::new("NAXIS2".to_string(), nrows.to_string(), Some("Number of rows".to_string())));
-    header.add_card(&Card::new("PCOUNT".to_string(), 0.to_string(), Some("Parameter count".to_string())));
-    header.add_card(&Card::new("GCOUNT".to_string(), 1.to_string(), Some("Group count".to_string())));
+    header.add_card_on_index(&Card::new("XTENSION".to_string(), "BINTABLE".to_string(), Some("Binary table".to_string())), 0);
+    header.add_card_after(&Card::new("BITPIX".to_string(), 8.to_string(), Some("Table BITPIX".to_string())), "XTENSION");
+    header.add_card_after(&Card::new("NAXIS".to_string(), 2.to_string(), Some("2D table".to_string())), "BITPIX");
+    header.add_card_after(&Card::new("NAXIS1".to_string(), num_bytes.to_string(), Some("Number of bytes in row".to_string())), "NAXIS");
+    header.add_card_after(&Card::new("NAXIS2".to_string(), nrows.to_string(), Some("Number of rows".to_string())), "NAXIS1");
+    header.add_card_after(&Card::new("PCOUNT".to_string(), 0.to_string(), Some("Parameter count".to_string())), "NAXIS2");
+    header.add_card_after(&Card::new("GCOUNT".to_string(), 1.to_string(), Some("Group count".to_string())), "PCOUNT");
+    header.add_card_after(&Card::new("TFIELDS".to_string(), tfields.to_string(), Some("Number of fields per row".to_string())), "GCOUNT");
     for (i, column) in columns.iter().enumerate() {
         header.add_card(&Card::new(format!("TTYPE{}", i + 1), column.ttype.clone(), Some("Name of field".to_string())));
         header.add_card(&Card::new(format!("TFORM{}", i + 1), column.tform.clone(), Some("Format of field".to_string())));

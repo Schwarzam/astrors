@@ -7,10 +7,12 @@ use crate::io::hdus::bintable::bintable::*;
 use crate::io::header::card::Card;
 use crate::io::Header;
 
-const MANDATORY_KEYWORDS: [&str; 3] = [
+const MANDATORY_KEYWORDS: [&str; 5] = [
     "XTENSION",
     "BITPIX",
     "NAXIS",
+    "NAXIS1",
+    "NAXIS2",
 ];
 
 

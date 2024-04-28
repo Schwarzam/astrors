@@ -46,6 +46,7 @@ pub fn clear_table_on_header(header: &mut Header) {
             header.remove(&format!("TDISP{}", i));
             header.remove(&format!("TBCOL{}", i));
         }
+        header.remove("XTENSION");
         header.remove("PCOUNT");
         header.remove("GCOUNT");
         header.remove("BITPIX");
