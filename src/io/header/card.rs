@@ -236,6 +236,8 @@ impl Card {
             keyword = card_str.splitn(2, '=').collect::<Vec<&str>>()[0].trim().to_string();
         }
 
+        keyword = keyword.trim_end().to_string();
+
         let remaining = card_str.splitn(2, '=').collect::<Vec<&str>>()[1].trim();
         if let Some(idx) = remaining.find(" /") {
             // If there is a '/' character, we split the remaining string into value and comment.
