@@ -1,11 +1,15 @@
 [package]
-name = "astrors"
-version = "0.1.8"
-authors = ["Gustavo Schwarz gustavo.b.schwarz@gmail.com", "Vincenzo Alberice alberice.vincenzo@gmail.com", "Thales Lopes thales.t.lopes@gmail.com"] # A list of the package authors
+authors = [
+  "Gustavo Schwarz gustavo.b.schwarz@gmail.com",
+  "Vincenzo Alberice alberice.vincenzo@gmail.com",
+  "Thales Lopes thales.t.lopes@gmail.com",
+] # A list of the package authors
 edition = "2021"
+name = "astrors"
+version = "0.1.9"
 
-repository = "https://github.com/schwarzam/astrors"
 license = "BSD-3-Clause" # The license your package is under
+repository = "https://github.com/schwarzam/astrors" 
 
 readme = "README.md"
 
@@ -16,17 +20,18 @@ include = ["/src", "LICENSE", "README.md"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-rayon = "1.8.0"
-ndarray = { version = "0.15.6", features = ["rayon"] }
-ndarray-stats = "0.5.1"
-memmap = "0.7"
-byteorder = "1.5.0"
-polars = { version = "0.38.3", features=["dtype-u8", "dtype-i8", "dtype-i16"] }
+ndarray = "0.15.6"
 num_cpus = "1.0"
-chrono = "0.4.35"
-regex = "1.10.3"
+polars = {version = "0.43.1", features = ["dtype-u8", "dtype-i8", "dtype-i16"]}
 rand = "0.8.5"
+rayon = "1.8.0"
+regex = "1.10.3"
 
 [build-dependencies]
+byteorder = "1.5.0"
 cc = "1.0.79"
-
+chrono = "0.4.35"
+memmap = "0.7"
+ndarray = {version = "0.15.6", features = ["rayon"]}
+ndarray-stats = "0.5.1"
+num_cpus = "1.0"
