@@ -1,4 +1,3 @@
-use polars::datatypes::PlSmallStr;
 use polars::{prelude::NamedFrom, series::Series};
 
 use crate::io::hdus::bintable::*;
@@ -149,8 +148,8 @@ impl ColumnArrayBuffer {
     }
 
     pub fn to_series(&self, col_name: &str) -> Series {
-        let col = PlSmallStr::from_str(col_name);
-        let blank = PlSmallStr::from_str("");
+        let col = col_name;
+        let blank = "";
         let series = match self {
             ColumnArrayBuffer::L(data) => Series::new(
                 col,
@@ -281,8 +280,8 @@ impl ColumnDataBuffer {
     }
 
     pub fn to_series(&self, col_name: &str) -> Series {
-        let col = PlSmallStr::from_str(col_name);
-        let blank = PlSmallStr::from_str("");
+        let col = col_name;
+        let blank = "";
         let series = match self {
             ColumnDataBuffer::L(data) => Series::new(col, data),
             ColumnDataBuffer::X(data) => Series::new(col, data),
