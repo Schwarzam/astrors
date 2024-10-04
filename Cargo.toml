@@ -5,7 +5,7 @@ authors = [
   "Thales Lopes thales.t.lopes@gmail.com",
 ] # A list of the package authors
 edition = "2021"
-name = "astrors"
+name = "astrors_(fork)"
 version = "0.1.9"
 
 license = "BSD-3-Clause" # The license your package is under
@@ -13,7 +13,7 @@ repository = "https://github.com/schwarzam/astrors"
 
 readme = "README.md"
 
-description = "Astronomical package to deal with FITS (compressed also) and WCS, still in development."
+description = "(FORK) Astronomical package to deal with FITS (compressed also) and WCS, still in development."
 
 include = ["/src", "LICENSE", "README.md"]
 
