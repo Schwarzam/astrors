@@ -6,7 +6,7 @@ authors = [
 ] # A list of the package authors
 edition = "2021"
 name = "astrors-fork"
-version = "0.1.9"
+version = "0.1.10"
 
 license = "BSD-3-Clause" # The license your package is under
 repository = "https://github.com/schwarzam/astrors" 
@@ -22,7 +22,7 @@ include = ["/src", "LICENSE", "README.md"]
 [dependencies]
 ndarray = "0.15.6"
 num_cpus = "1.0"
-polars = {version = "0.43.1", features = ["dtype-u8", "dtype-i8", "dtype-i16"]}
+polars = {version = "0.41.0", features = ["dtype-u8", "dtype-i8", "dtype-i16"]}
 rand = "0.8.5"
 rayon = "1.8.0"
 regex = "1.10.3"
