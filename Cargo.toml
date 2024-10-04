@@ -5,7 +5,7 @@ authors = [
   "Thales Lopes thales.t.lopes@gmail.com",
 ] # A list of the package authors
 edition = "2021"
-name = "astrors_(fork)"
+name = "astrors-fork"
 version = "0.1.9"
 
 license = "BSD-3-Clause" # The license your package is under
