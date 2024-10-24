@@ -2,7 +2,9 @@ mod utils;
 pub mod header;
 pub mod hdus;
 pub mod hdulist;
+pub mod getdata;
 
+pub use self::getdata::get_data;
 pub use self::header::Header;
 
 pub mod compression_algorithms {

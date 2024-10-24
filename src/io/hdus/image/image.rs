@@ -34,6 +34,13 @@ impl ImageData {
         ImageData::EMPTY
     }
 
+    pub fn is_empty(&self) -> bool {
+        match self {
+            ImageData::EMPTY => true,
+            _ => false,
+        }
+    }
+
     pub fn get_bitpix(&self) -> i32 {
         match self {
             ImageData::U8(_) => 8,

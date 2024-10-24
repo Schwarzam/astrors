@@ -3,6 +3,7 @@ mod common;
 use astrors::io::hdus::primaryhdu::PrimaryHDU;
 use astrors::io::hdus::utils::buffer_has_more_data;
 use astrors::io::hdulist::HDUList;
+use astrors::io::get_data;
 use astrors::fits;
 
 use polars::series::Series;
@@ -29,6 +30,17 @@ mod hdu_tests {
         hdu_list.write_to(outfile.to_str().unwrap())?;
 
         println!("HDU List: {:?}", hdu_list.hdus.len());
+
+        Ok(())
+    }
+
+    #[test]
+    fn getdata() -> Result<()> {
+        let testfile = common::get_testdata_path("WFPC2u57_2.fits");
+        
+        let data = get_data(testfile.to_str().unwrap());
+
+        println!("Data: {:?}", data);
 
         Ok(())
     }
