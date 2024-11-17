@@ -5,7 +5,22 @@ use polars::{prelude::NamedFrom, series::Series};
 use crate::io::hdus::bintable::*;
 
 
-
+/// Represents a data buffer for a column in a FITS binary table.
+///
+/// # Variants
+/// - `L(Vec<bool>)`: Logical data (boolean values).
+/// - `X(Vec<u8>)`: Bit data.
+/// - `B(Vec<i8>)`: Byte data (8-bit signed integers).
+/// - `I(Vec<i16>)`: Short data (16-bit signed integers).
+/// - `J(Vec<i32>)`: Integer data (32-bit signed integers).
+/// - `K(Vec<i64>)`: Long data (64-bit signed integers).
+/// - `A(Vec<String>)`: Character data (ASCII strings).
+/// - `E(Vec<f32>)`: Float data (32-bit floating-point values).
+/// - `D(Vec<f64>)`: Double data (64-bit floating-point values).
+/// - `C(Vec<String>)`: Complex data (stored as strings for simplicity).
+/// - `M(Vec<String>)`: Double complex data (stored as strings for simplicity).
+/// - `P(Vec<Vec<i32>>)` and `Q(Vec<Vec<i64>>)`:
+///   - Array descriptors for variable-length columns.
 #[derive(Debug, PartialEq)]
 pub enum ColumnDataBuffer {
     L(Vec<bool>), // Logical
@@ -23,6 +38,17 @@ pub enum ColumnDataBuffer {
     Q(Vec<Vec<i64>>), // Array descriptor
 }
 
+/// Represents an array buffer for columns with vector data in a FITS binary table.
+///
+/// # Variants
+/// - `L(Vec<Vec<bool>>)`
+/// - `X(Vec<Vec<u8>>)`
+/// - `B(Vec<Vec<i8>>)`
+/// - `I(Vec<Vec<i16>>)`
+/// - `J(Vec<Vec<i32>>)`
+/// - `K(Vec<Vec<i64>>)`
+/// - `E(Vec<Vec<f32>>)`
+/// - `D(Vec<Vec<f64>>)`
 #[derive(Debug, PartialEq)]
 pub enum ColumnArrayBuffer {
     L(Vec<Vec<bool>>), // Logical
@@ -41,6 +67,14 @@ enum BufferTypes
     Vector(ColumnArrayBuffer),
 }
 
+/// Represents a generalized buffer for a FITS binary table column.
+///
+/// # Fields
+/// - `tform` (String): The format string of the column (e.g., "J", "D").
+/// - `size` (i32): The number of rows in the column.
+/// - `buffer` (BufferTypes): The actual data buffer (scalar or vector).
+/// - `sub_size` (i32): The size of sub-elements in case of vector columns.
+/// - `data_letter` (String): The first letter of the `TFORM` format string, indicating the data type.
 pub struct Buffer {
     tform : String,
     size : i32,
@@ -50,6 +84,18 @@ pub struct Buffer {
 }
 
 impl Buffer {
+    /// Constructs a new `Buffer` for a FITS binary table column.
+    ///
+    /// # Arguments
+    /// - `tform` (&str): The format string for the column (e.g., "J", "D").
+    /// - `size` (i32): The number of rows in the column.
+    ///
+    /// # Returns
+    /// - `Buffer`: A new buffer initialized based on the column's format and size.
+    ///
+    /// # Behavior
+    /// - Initializes the buffer as either scalar or vector, depending on the format string.
+    /// - Calculates the `sub_size` for vector columns.
     pub fn new(tform : &str, size : i32) -> Self {
         let tform = tform.to_string();
         let data_letter = get_first_letter(&tform).to_string();
@@ -79,6 +125,13 @@ impl Buffer {
         }
     }
 
+    /// Converts the buffer into a Polars `Series` for data analysis.
+    ///
+    /// # Arguments
+    /// - `col_name` (&str): The name of the column.
+    ///
+    /// # Returns
+    /// - `Series`: A Polars `Series` containing the column's data.
     pub fn to_series(&self, col_name : &str) -> Series {
         match &self.buffer {
             BufferTypes::Scalar(data) => data.to_series(col_name),
@@ -86,12 +139,19 @@ impl Buffer {
         }
     }
 
+    /// Clears the buffer, removing all stored data.
     pub fn clear(&mut self){
         match &mut self.buffer {
             BufferTypes::Scalar(data) => data.clear(),
             BufferTypes::Vector(data) => data.clear(),
         }
     }
+
+    /// Writes data to the buffer at a specified row index.
+    ///
+    /// # Arguments
+    /// - `bytes` (&[u8]): The raw bytes to write.
+    /// - `idx` (i64): The row index where the data should be written.
     pub fn write_on_idx(&mut self, bytes : &[u8], idx : i64){
         match &mut self.buffer {
             BufferTypes::Scalar(data) => data.write_on_idx(bytes, &self.data_letter, idx),
@@ -99,6 +159,10 @@ impl Buffer {
         }
     }
 
+    /// Reads variable-length column data (e.g., `P` and `Q` type columns).
+    ///
+    /// # Behavior
+    /// - Processes the buffer to extract variable-length data, if applicable.
     pub fn read_var_len_cols(&mut self){
         //TODO
         
@@ -117,6 +181,15 @@ impl Buffer {
 }
 
 impl ColumnArrayBuffer {
+    /// Constructs a new `ColumnArrayBuffer` for array data in a column.
+    ///
+    /// # Arguments
+    /// - `tform` (&str): The format string for the column.
+    /// - `size` (i32): The number of rows in the column.
+    /// - `sub_size` (i32): The size of sub-elements in the array.
+    ///
+    /// # Returns
+    /// - `ColumnArrayBuffer`: A new buffer for storing array data.
     pub fn new(tform : &str, size : i32, sub_size : i32) -> Self {
         let tform = tform.trim();
         let tform_type = get_first_letter(tform);
@@ -151,7 +224,13 @@ impl ColumnArrayBuffer {
         }
     }
 
-
+    /// Converts the array buffer into a Polars `Series`.
+    ///
+    /// # Arguments
+    /// - `col_name` (&str): The name of the column.
+    ///
+    /// # Returns
+    /// - `Series`: A Polars `Series` containing the column's array data.
     pub fn to_series(&self, col_name : &str) -> Series {
         let series = match self {
             ColumnArrayBuffer::L(data)   =>  Series::new(col_name, 
@@ -198,6 +277,7 @@ impl ColumnArrayBuffer {
         series
     }
 
+    /// Clears the array buffer, removing all stored data.
     pub fn clear(&mut self){
         match self {
             ColumnArrayBuffer::L(data)   => data.clear(),
@@ -211,6 +291,13 @@ impl ColumnArrayBuffer {
         }
     }
 
+    /// Writes data to the array buffer at a specified row index.
+    ///
+    /// # Arguments
+    /// - `bytes` (&[u8]): The raw bytes to write.
+    /// - `data_letter` (&str): The format letter indicating the data type.
+    /// - `idx` (i64): The row index where the data should be written.
+    /// - `sub_size` (i32): The number of sub-elements for vector data.
     pub fn write_on_idx(&mut self, bytes : &[u8], data_letter : &str, idx : i64, sub_size : i32){
         match data_letter {
             "L" => {
@@ -244,6 +331,14 @@ impl ColumnArrayBuffer {
 }
 
 impl ColumnDataBuffer {
+    /// Constructs a new `ColumnDataBuffer` for scalar data in a column.
+    ///
+    /// # Arguments
+    /// - `tform` (&str): The format string for the column.
+    /// - `size` (i32): The number of rows in the column.
+    ///
+    /// # Returns
+    /// - `ColumnDataBuffer`: A new buffer for storing scalar data.
     pub fn new(tform : &str, size : i32) -> Self {
         let tform = tform.trim();
         let tform_type = get_first_letter(tform);
@@ -266,6 +361,13 @@ impl ColumnDataBuffer {
         }
     }
 
+    /// Converts the scalar data buffer into a Polars `Series`.
+    ///
+    /// # Arguments
+    /// - `col_name` (&str): The name of the column.
+    ///
+    /// # Returns
+    /// - `Series`: A Polars `Series` containing the column's scalar data.
     pub fn to_series(&self, col_name : &str) -> Series {
         let series = match self {
             ColumnDataBuffer::L(data)   =>  Series::new(col_name, data),
@@ -295,6 +397,7 @@ impl ColumnDataBuffer {
         series
     }
 
+    /// Clears the scalar data buffer, removing all stored data.
     pub fn clear(&mut self){
         match self {
             ColumnDataBuffer::L(data)   => data.clear(),
@@ -313,6 +416,12 @@ impl ColumnDataBuffer {
         }
     }
 
+    /// Writes data to the scalar buffer at a specified row index.
+    ///
+    /// # Arguments
+    /// - `bytes` (&[u8]): The raw bytes to write.
+    /// - `data_letter` (&str): The format letter indicating the data type.
+    /// - `idx` (i64): The row index where the data should be written.
     pub fn write_on_idx(&mut self, bytes : &[u8], data_letter : &str, idx : i64){
         match data_letter {
             "L" => {

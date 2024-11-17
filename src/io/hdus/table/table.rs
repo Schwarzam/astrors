@@ -14,6 +14,17 @@ use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use crate::io::hdus::table::buffer::ColumnDataBuffer;
 use crate::io::hdus::bintable::split_buffer;
 
+/// Represents a column in a FITS table.
+///
+/// # Fields
+/// - `ttype` (String): The name of the column.
+/// - `tform` (String): The format of the column (e.g., "I12", "A20").
+/// - `tunit` (Option<String>): The unit of the column data, if specified.
+/// - `tdisp` (Option<String>): Display format for the column, if specified.
+/// - `tbcol` (Option<i32>): Starting byte of the field in a row.
+/// - `start_address` (usize): The starting address of the column data within a row.
+/// - `type_bytes` (usize): The number of bytes used to store the column data.
+/// - `char_type` (char): A character representing the data type of the column.
 #[derive(Debug)]
 pub struct Column {
     pub ttype: String, 
@@ -27,6 +38,19 @@ pub struct Column {
 }
 
 impl Column {
+
+    /// Creates a new `Column` instance.
+    ///
+    /// # Arguments
+    /// - `ttype` (String): The name of the column.
+    /// - `tform` (String): The format of the column (e.g., "I12", "A20").
+    /// - `tunit` (Option<String>): The unit of the column data, if any.
+    /// - `tdisp` (Option<String>): Display format for the column, if any.
+    /// - `tbcol` (Option<i32>): The starting byte of the field.
+    /// - `start_address` (usize): The starting address of the column data.
+    ///
+    /// # Returns
+    /// A new `Column` instance initialized with the provided attributes.
     pub fn new(ttype: String, tform: String, tunit: Option<String>, tdisp: Option<String>, tbcol: Option<i32>, start_address: usize) -> Self {
         let tform2 = tform.clone();
         let column = Column {
@@ -43,6 +67,18 @@ impl Column {
     }
 }
 
+/// Parses the `tform` string to determine the type and size of a column.
+///
+/// # Arguments
+/// - `tform` (str): The format string (e.g., "I12", "A20").
+///
+/// # Returns
+/// A tuple containing:
+/// - `char`: The data type (e.g., 'I', 'A').
+/// - `usize`: The number of bytes used to store the column data.
+///
+/// # Panics
+/// If the format string is invalid or cannot be parsed.
 fn get_tform_type_size(tform: &str) -> (char, usize) {
     let tform = tform.trim();
     if tform.len() == 1 {
@@ -54,6 +90,17 @@ fn get_tform_type_size(tform: &str) -> (char, usize) {
     }
 }
 
+/// Reads table metadata from a FITS header and generates a list of `Column` instances.
+///
+/// # Arguments
+/// - `header` (&Header): The FITS header containing table information.
+///
+/// # Returns
+/// `Result<Vec<Column>, String>`: A vector of `Column` instances or an error string if the header is invalid.
+///
+/// # Behavior
+/// - Parses metadata like `TTYPE`, `TFORM`, and `TUNIT` for each field.
+/// - Calculates start addresses and data type sizes.
 pub fn read_tableinfo_from_header(header: &Header) -> Result<Vec<Column>, String> {
     let mut columns: Vec<Column> = Vec::new();
     let tfields = header["TFIELDS"].value.as_int().unwrap_or(0);
@@ -100,6 +147,19 @@ pub fn read_tableinfo_from_header(header: &Header) -> Result<Vec<Column>, String
     Ok(columns)
 }
 
+/// Reads table bytes from a FITS file and converts them into a Polars DataFrame.
+///
+/// # Arguments
+/// - `columns` (&mut Vec<Column>): The list of columns describing the table structure.
+/// - `nrows` (i64): The number of rows in the table.
+/// - `file` (&mut File): The file from which to read the table data.
+///
+/// # Returns
+/// `Result<DataFrame, std::io::Error>`: A DataFrame containing the table data or an I/O error.
+///
+/// # Behavior
+/// - Uses parallel processing to read and parse table data in chunks.
+/// - Converts binary data into a structured DataFrame.
 pub fn read_table_bytes_to_df(columns : &mut Vec<Column>, nrows: i64, file: &mut File) -> Result<DataFrame, std::io::Error> {
     let mut n_chunks: u16 = 1;
     let mut n_threads: u16 = num_cpus::get() as u16;
@@ -163,6 +223,17 @@ pub fn read_table_bytes_to_df(columns : &mut Vec<Column>, nrows: i64, file: &mut
 }
 
 
+/// Converts a Polars DataFrame into a list of `Column` instances.
+///
+/// # Arguments
+/// - `df` (&DataFrame): The DataFrame to be converted.
+///
+/// # Returns
+/// `Result<Vec<Column>, std::io::Error>`: A vector of `Column` instances or an I/O error.
+///
+/// # Behavior
+/// - Maps DataFrame column types to FITS-compatible formats.
+/// - Calculates starting addresses and data type sizes.
 pub fn polars_to_columns(df: &DataFrame) -> Result<Vec<Column>, std::io::Error> {
     let mut start_address : usize = 0;
     let mut sum_to_address : usize = 0;
@@ -216,7 +287,16 @@ pub fn polars_to_columns(df: &DataFrame) -> Result<Vec<Column>, std::io::Error> 
     Ok(columns)
 }
 
-
+/// Calculates the total number of bytes required to store a single row of the table.
+///
+/// # Arguments
+/// - `columns` (&Vec<Column>): The list of columns in the table.
+///
+/// # Returns
+/// `usize`: The total number of bytes in a single row.
+///
+/// # Behavior
+/// - Adds the sizes of all columns, including padding if necessary.
 pub fn calculate_number_of_bytes_of_row(columns: &Vec<Column>) -> usize {
     let mut bytes = 0;
     for column in columns.iter() {
@@ -228,6 +308,16 @@ pub fn calculate_number_of_bytes_of_row(columns: &Vec<Column>) -> usize {
     bytes
 }
 
+/// Populates a FITS header with metadata for a table based on its columns.
+///
+/// # Arguments
+/// - `header` (&mut Header): The FITS header to be updated.
+/// - `columns` (&Vec<Column>): The list of columns describing the table structure.
+/// - `nrows` (i64): The number of rows in the table.
+///
+/// # Behavior
+/// - Adds metadata like `BITPIX`, `TFIELDS`, `NAXIS`, and `NAXISn`.
+/// - Includes details for each column, such as `TTYPE` and `TFORM`.
 pub fn create_table_on_header(header: &mut Header, columns: &Vec<Column>, nrows : i64) {
     clear_table_on_header(header);
     let tfields = columns.len();
@@ -256,6 +346,19 @@ pub fn create_table_on_header(header: &mut Header, columns: &Vec<Column>, nrows 
     }
 }
 
+/// Converts a DataFrame into a FITS table binary buffer and writes it to a file.
+///
+/// # Arguments
+/// - `columns` (Vec<Column>): The list of columns describing the table structure.
+/// - `df` (&DataFrame): The DataFrame containing the table data.
+/// - `file` (&mut File): The file to which the binary buffer will be written.
+///
+/// # Returns
+/// `Result<(), std::io::Error>`: Returns `Ok(())` on success or an I/O error.
+///
+/// # Behavior
+/// - Converts DataFrame rows into binary format based on column types.
+/// - Pads the buffer to a FITS-compliant block size before writing.
 pub fn df_to_buffer(columns: Vec<Column>, df: &DataFrame, file: &mut File) -> Result<(), std::io::Error> {
     //buffer should be written in utf8
     let nrows = df.height();

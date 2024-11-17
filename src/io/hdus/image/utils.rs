@@ -1,3 +1,24 @@
+/*!
+ * Utilities for Handling Binary Data and FITS Image Processing
+ * 
+ * This module provides a collection of utility functions for efficient conversion and manipulation
+ * of binary data used in FITS (Flexible Image Transport System) file processing. The utilities
+ * are designed to handle raw byte buffers and convert them into numerical data types such as
+ * integers and floating-point values. Additionally, it includes tools for working with multidimensional
+ * data structures (e.g., images) and their metadata.
+ *
+ * Key functionalities include:
+ * - Conversion of raw byte arrays into numerical vectors (`Vec<i8>`, `Vec<f32>`, `Vec<f64>`, etc.).
+ * - Pre-allocated conversions for improved performance in large datasets.
+ * - Determination of the size of data types based on the FITS `BITPIX` standard.
+ * - Extraction of multidimensional shapes from FITS headers.
+ * - Construction of `ndarray` structures from raw data and shapes.
+ *
+ * This module leverages the `rayon` crate for parallel processing, ensuring high performance
+ * when handling large FITS files or datasets. These utilities are a core part of the FITS 
+ * file handling pipeline, enabling both efficient data loading and memory-safe operations.
+ */
+
 use rayon::prelude::*;
 use ndarray::{ArrayD, IxDyn};
 

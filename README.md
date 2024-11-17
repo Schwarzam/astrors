@@ -52,8 +52,7 @@ To read a FITS file and access its HDUs (Header/Data Units), you can use the fol
 ```rust
 use astrors::fits;
 
-let testfile = common::get_testdata_path("your_file.fits");
-let mut hdu_list = fits::fromfile(testfile.to_str().unwrap()).unwrap();
+let mut hdu_list = fits::fromfile("your_file.fits").unwrap();
 
 println!("HDU List Length: {:?}", hdu_list.hdus.len());
 ```
@@ -67,8 +66,7 @@ This code snippet opens a FITS file, reads its contents into an `HDUList` struct
 After reading and optionally modifying HDUs, you can write them back to a new FITS file:
 
 ```rust
-let outfile = common::get_outtestdata_path("modified_file.fits");
-hdu_list.write_to(outfile.to_str().unwrap()).unwrap();
+hdu_list.write_to("modified_file.fits").unwrap();
 ```
 
 ## Manipulating HDU Data

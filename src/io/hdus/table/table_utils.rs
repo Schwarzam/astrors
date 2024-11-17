@@ -1,5 +1,18 @@
 use crate::io::Header;
 
+/// Formats a number in scientific notation, ensuring it adheres to specified length constraints.
+///
+/// # Arguments
+/// * `num` - The number to be formatted.
+/// * `max_len` - The maximum allowed length for the formatted string.
+///
+/// # Returns
+/// A string representing the number in scientific notation, truncated if necessary.
+///
+/// # Behavior
+/// * Replaces "0e0" with "0.0" for zero representation.
+/// * Uses uppercase "E" for scientific notation.
+/// * Truncates the string if it exceeds `max_len`, ensuring it does not end with "E" or ".".
 pub fn format_scientific<T>(num: T, max_len: usize) -> String 
 where
     T: std::fmt::LowerExp + PartialEq + Into<f64>,

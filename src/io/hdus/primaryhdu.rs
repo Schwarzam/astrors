@@ -14,12 +14,24 @@ const MANDATORY_KEYWORDS: [&str; 3] = [
     "NAXIS",
 ];
 
+/// Represents the Primary HDU (Header Data Unit) of a FITS file.
+///
+/// This struct encapsulates the header and image data of the Primary HDU.
+/// It provides functionality for creating, reading, and writing the Primary HDU.
 pub struct PrimaryHDU{
     pub header: Header,
     pub data: ImageData,
 }
 
 impl PrimaryHDU {
+    /// Creates a new `PrimaryHDU` instance with the provided header and image data.
+    ///
+    /// # Arguments
+    /// - `header` (Header): The header associated with the HDU.
+    /// - `data` (ImageData): The image data for the HDU.
+    ///
+    /// # Returns
+    /// - `PrimaryHDU`: A new instance of the Primary HDU.
     pub fn new(header: Header, data: ImageData) -> Self {
         Self {
             header,
@@ -27,6 +39,10 @@ impl PrimaryHDU {
         }
     }
 
+    /// Creates a default `PrimaryHDU` with minimal header information.
+    ///
+    /// # Returns
+    /// - `PrimaryHDU`: A default Primary HDU with "SIMPLE", "BITPIX", and "NAXIS" header keywords.
     pub fn default() -> Self {
         let mut header = Header::new();
         header.add_card(&Card::new("SIMPLE".to_string(), "T".to_string(), Some("Primary HDU".to_string())));
@@ -38,6 +54,17 @@ impl PrimaryHDU {
         }
     }
 
+    /// Reads a `PrimaryHDU` from a file.
+    ///
+    /// # Arguments
+    /// - `f` (&mut File): The file handle to read from.
+    ///
+    /// # Returns
+    /// - `Result<PrimaryHDU>`: The Primary HDU read from the file.
+    ///
+    /// # Behavior
+    /// - Checks if the mandatory keywords are present and in order.
+    /// - Returns an empty `ImageData` if `NAXIS` is 0.
     pub fn read_from_file(mut f: &mut File) -> Result<Self>  {
         let mut header = Header::new();
         header.read_from_file(&mut f)?;
@@ -58,6 +85,16 @@ impl PrimaryHDU {
         }
     }
 
+    /// Calculates the byte position of the end of the Primary HDU in the file.
+    ///
+    /// # Arguments
+    /// - `f` (&mut File): The file handle.
+    ///
+    /// # Returns
+    /// - `usize`: The byte position of the end of the Primary HDU.
+    ///
+    /// # Behavior
+    /// - Calculates the size of the image data and adjusts to the next 2880-byte boundary.
     pub fn get_end_byte_position(mut f: &mut File) -> usize {
         let first_pos = f.seek(std::io::SeekFrom::Current(0)).unwrap();
 
@@ -81,6 +118,17 @@ impl PrimaryHDU {
         end as usize
     }
 
+    /// Writes the `PrimaryHDU` to a file.
+    ///
+    /// # Arguments
+    /// - `f` (&mut File): The file handle to write to.
+    ///
+    /// # Returns
+    /// - `Result<()>`: Indicates whether the operation was successful.
+    ///
+    /// # Behavior
+    /// - Ensures the mandatory keywords are ordered correctly.
+    /// - Writes the header and image data, if present.
     pub fn write_to_file(&mut self, mut f: &mut File) -> Result<()> {
         self.header.fix_header_w_mandatory_order(&MANDATORY_KEYWORDS);
         

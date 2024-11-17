@@ -1,5 +1,6 @@
 use std::io::Write;
 
+/// Represents a header card in a FITS file.
 #[derive(Debug, PartialEq, Clone)]
 pub struct Card {
     pub keyword: String,
@@ -7,6 +8,7 @@ pub struct Card {
     pub comment: Option<String>,
 }
 
+/// Represents the possible data types for a card value.
 #[derive(Debug, PartialEq, Clone)]
 pub enum CardValue{
     INT(i64),
@@ -17,6 +19,7 @@ pub enum CardValue{
 }
 
 impl CardValue {
+    /// Returns the value as an integer if applicable.
     pub fn as_int(&self) -> Option<i64> {
         if let CardValue::INT(value) = self {
             Some(*value)
@@ -25,6 +28,7 @@ impl CardValue {
         }
     }
 
+    /// Returns the value as a float if applicable.
     pub fn as_float(&self) -> Option<f64> {
         if let CardValue::FLOAT(value) = self {
             Some(*value)
@@ -33,6 +37,7 @@ impl CardValue {
         }
     }
 
+    /// Returns the value as a boolean if applicable.
     pub fn as_bool(&self) -> Option<bool> {
         if let CardValue::LOGICAL(value) = self {
             Some(*value)
@@ -41,6 +46,7 @@ impl CardValue {
         }
     }
 
+    /// Converts the value to its string representation.
     pub fn to_string(&self) -> String {
         match self {
             CardValue::INT(value) => value.to_string(),
@@ -73,6 +79,7 @@ fn check_type(s: &str) -> CardValue {
 }
 
 impl Default for Card {
+    /// Provides a default `Card` with empty values.
     fn default() -> Self {
         Card {
             keyword: "".to_string(),
@@ -83,6 +90,12 @@ impl Default for Card {
 }
 
 impl Card {
+    /// Creates a new `Card`.
+    ///
+    /// # Arguments
+    /// - `keyword`: The card keyword.
+    /// - `value`: The card value as a string.
+    /// - `comment`: An optional comment.
     pub fn new(keyword: String, value: String, comment: Option<String>) -> Self {
         Card {
             keyword: keyword,
@@ -91,40 +104,58 @@ impl Card {
         }
     }
 
-    // Function to set the value and take ownership of the passed variable
+    /// Sets the card's value.
+    ///
+    /// # Arguments
+    /// - `new_value`: The new value to set.
     pub fn set_value(&mut self, new_value: String) {
         self.value = check_type(&new_value);
     }
 
+    /// Retrieves the card's value as a cloned string.
     pub fn get_value_clone(&self) -> String {
         self.value.to_string()
     }
 
-    // Function to set the comment and take ownership of the passed variable
+    /// Sets the card's comment.
+    ///
+    /// # Arguments
+    /// - `new_comment`: The new comment to set.
     pub fn set_comment(&mut self, new_comment: String) {
         self.comment = Some(new_comment);
     }
 
+    /// Retrieves the card's comment as a cloned string.
     pub fn get_comment_clone(&self) -> String {
         self.comment.clone().unwrap_or("".to_string())
     }
 
-    // Function to set the keyword and take ownership of the passed variable
+    /// Sets the card's keyword.
+    ///
+    /// # Arguments
+    /// - `new_keyword`: The new keyword to set.
     pub fn set_keyword(&mut self, new_keyword: String) {
         self.keyword = new_keyword;
     }
 
+    /// Retrieves the card's keyword as a cloned string.
     pub fn get_keyword_clone(&self) -> String {
         self.keyword.clone()
     }
 
+    /// Writes a formatted string to a writer. The string is truncated to 80 characters and padded with spaces.
     fn write_formatted_string<W: Write>(&self, writer: &mut W, mut string: String, bytes_count: &mut i32) -> std::io::Result<()> {
         string.truncate(80);
         string.push_str(&" ".repeat(80 - string.len()));
         *bytes_count += 80;
         writer.write_all(string.as_bytes())
     }
-    
+
+    /// Writes the card to a writer in the FITS format.
+    ///
+    /// # Arguments
+    /// - `writer`: The writer to write the card to.
+    /// - `bytes_count`: A counter to track the number of bytes written.
     pub fn write_to<W: Write>(&self, writer: &mut W, bytes_count: &mut i32) -> std::io::Result<()> {
         if self.keyword == "COMMENT" || self.keyword == "HISTORY" || self.value == CardValue::EMPTY {
             self.write_formatted_string(writer, format!("{:<80}", self.keyword), bytes_count)
@@ -142,14 +173,22 @@ impl Card {
         }
     }
 
+    /// Retrieves the card's keyword as a reference.
     pub fn keyword_ref(&self) -> &str {
         self.keyword.as_ref()
     }
 
+    /// Retrieves the card's value as a reference.
     pub fn comment_ref(&self) -> &str {
         self.comment.as_ref().unwrap()
     }
-    
+
+    /// Writes a string card to a writer in the FITS format.
+    ///
+    /// # Arguments
+    /// - `writer`: The writer to write the card to.
+    /// - `keyword_string`: The formatted keyword string.
+    /// - `bytes_count`: A counter to track the number of bytes written.
     fn write_string_card<W: Write>(&self, writer: &mut W, keyword_string: String, bytes_count: &mut i32) -> std::io::Result<()> {
         if self.keyword == "" {
             return Ok(());
@@ -184,6 +223,7 @@ impl Card {
         Ok(())
     }
     
+
     fn write_other_card<W: Write>(&self, writer: &mut W, keyword_string: String, bytes_count: &mut i32) -> std::io::Result<()> {
         // using unwrap_or with an empty string as default
         if self.keyword == "" {
@@ -210,7 +250,7 @@ impl Card {
         }
         self.write_formatted_string(writer, card_string, bytes_count)
     }
-
+    
     pub fn parse_card(card_str: String) -> Self {
         if card_str.trim().len() < 1 {
             return Card::default();

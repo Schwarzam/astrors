@@ -29,12 +29,13 @@ impl IndexMut<&str> for Header {
 }
 
 impl Header {
+    /// Constructs a new empty Header.
     pub fn new() -> Self {
         Header {
             cards: Vec::new(),
         }
     }
-
+    
     pub fn fix_header_w_mandatory_order(&mut self, keywords_order : &[&str]){
         self.cards.sort_by(|a, b| {
             let a_index = keywords_order.iter().position(|&k| k == a.keyword).unwrap_or(usize::MAX);
@@ -52,10 +53,12 @@ impl Header {
         true
     }
 
+    /// Checks if the header contains a card with the specified keyword.
     pub fn contains_key(&self, keyword: &str) -> bool {
         self.cards.iter().any(|card| card.keyword == keyword)
     }
 
+    /// Adds a card to the header.
     pub fn add_card(&mut self, card: &Card) {
         if self.get_card(&card.keyword).is_some() {
             return;
@@ -63,6 +66,7 @@ impl Header {
         self.cards.push(card.clone());
     }
 
+    /// Adds a card to the header at the specified index.
     pub fn add_card_on_index(&mut self, card: &Card, index: usize) {
         if self.get_card(&card.keyword).is_some() {
             return;
@@ -70,6 +74,7 @@ impl Header {
         self.cards.insert(index, card.clone());
     }
 
+    /// Adds a card to the header after the specified keyword.
     pub fn add_card_after(&mut self, card: &Card, keyword: &str) {
         if self.get_card(&card.keyword).is_some() {
             return;
@@ -80,10 +85,12 @@ impl Header {
         }
     }
 
+    /// Adds a card to the header before the specified keyword.
     pub fn get_card(&self, card_name: &str) -> Option<&Card> {
         self.cards.iter().find(|card| card.keyword == card_name)
     }
 
+    /// Adds a card to the header before the specified keyword.
     pub fn get_mut_card(&mut self, card_name: &str) -> Option<&mut Card> {
         self.cards.iter_mut().find(|card| card.keyword == card_name)
     }
@@ -108,36 +115,44 @@ impl Header {
     //     })
     // }
 
+    /// Removes a card from the header.
     pub fn remove(&mut self, keyword: &str) -> Option<Card> {
         self.cards.iter().position(|card| card.keyword == keyword).map(|idx| self.cards.remove(idx))
     }
 
+    /// Returns the number of cards in the header.
     pub fn len(&self) -> usize {
         self.cards.len()
     }
 
+    /// Returns true if the header contains no cards.
     pub fn is_empty(&self) -> bool {
         self.cards.is_empty()
     }
 
+    /// Clears all cards from the header.
     pub fn clear(&mut self) {
         self.cards.clear();
     }
 
+    /// Returns an iterator over the cards in the header.
     pub fn iter(&self) -> std::slice::Iter<Card> {
         self.cards.iter()
     }
 
+    /// Returns a mutable iterator over the cards in the header.
     pub fn iter_mut(&mut self) -> std::slice::IterMut<Card> {
         self.cards.iter_mut()
     }
 
+    /// Pretty prints the header.
     pub fn pretty_print(&self) {
         for card in &self.cards {
             println!("{} = {} / {}", card.keyword, card.value.to_string(), card.comment.as_ref().unwrap_or(&String::new()));
         }
     }
 
+    /// Pretty prints the header with more details.
     pub fn pretty_print_advanced(&self) {
         for card in &self.cards {
             println!("----------------------------------------");
@@ -147,7 +162,7 @@ impl Header {
         }
     }
     
-    // test
+    /// Reads the header from a file.
     pub fn read_from_file(&mut self, file: &mut File) -> std::io::Result<()>{
         let mut last_card : Card = Card::default();
         
@@ -191,6 +206,7 @@ impl Header {
         Ok(())
     } // read_from_buffer
 
+    /// Writes the header to a file.
     pub fn write_to_buffer<W: Write>(&self, writer: &mut W) -> std::io::Result<()> {
         let mut bytes_count = 0;
         for card in &self.cards {

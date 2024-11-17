@@ -1,6 +1,8 @@
 use rayon::prelude::*;
 use polars::{prelude::NamedFrom, series::Series};
 
+/// Enum representing column data types in a binary table.
+/// Each variant corresponds to a specific data type.
 #[derive(Debug, PartialEq)]
 pub enum ColumnDataBuffer {
     I(Vec<i32>),
@@ -11,6 +13,14 @@ pub enum ColumnDataBuffer {
 }
 
 impl ColumnDataBuffer {
+    /// Creates a new `ColumnDataBuffer` based on the FITS column format (TFORM) and size.
+    ///
+    /// # Arguments
+    /// * `tform` - A string specifying the FITS column format.
+    /// * `size` - The number of elements to allocate in the buffer.
+    ///
+    /// # Panics
+    /// Panics if the `tform` specifies an unsupported data type.
     pub fn new(tform : &str, size : i32) -> Self {
         let tform = tform.trim();
         let tform_type = tform.chars().next().unwrap();
@@ -24,6 +34,11 @@ impl ColumnDataBuffer {
         }
     }
 
+    /// Computes the maximum length of elements in the buffer.
+    ///
+    /// # Returns
+    /// The maximum length of elements when converted to strings (for numeric types)
+    /// or the maximum string length (for string type).
     pub fn max_len(&self) -> usize {
         match self {
             ColumnDataBuffer::I(data) => data.par_iter().map(|x| x.to_string().len()).max().unwrap_or(0),
@@ -34,6 +49,10 @@ impl ColumnDataBuffer {
         }
     }
 
+    /// Returns the byte size of the elements in the buffer.
+    ///
+    /// # Returns
+    /// The size in bytes of a single element in the buffer.
     pub fn byte_value(&self) -> usize{
         match self {
             ColumnDataBuffer::I(_data) => 4,
@@ -44,6 +63,16 @@ impl ColumnDataBuffer {
         }
     }
 
+    /// Returns the byte size of the specified data type.
+    ///
+    /// # Arguments
+    /// * `data_type` - A string representing the FITS data type.
+    ///
+    /// # Returns
+    /// The size in bytes of the specified data type.
+    ///
+    /// # Panics
+    /// Panics if the `data_type` is invalid.
     pub fn byte_value_from_str(data_type : &str) -> usize {
         match data_type {
             "I" => 4,
@@ -55,6 +84,13 @@ impl ColumnDataBuffer {
         }
     }
 
+    /// Converts the buffer into a Polars `Series` for analysis or manipulation.
+    ///
+    /// # Arguments
+    /// * `col_name` - The name of the column in the resulting `Series`.
+    ///
+    /// # Returns
+    /// A `Series` representing the data in the buffer.
     pub fn to_series(&self, col_name : &str) -> Series {
         let series = match self {
             ColumnDataBuffer::I(data) =>  Series::new(col_name, data),
@@ -66,6 +102,7 @@ impl ColumnDataBuffer {
         series
     }
 
+    /// Clears all elements in the buffer.
     pub fn clear(&mut self){
         match self {
             ColumnDataBuffer::I(data) => data.clear(),
@@ -76,6 +113,15 @@ impl ColumnDataBuffer {
         }
     }
 
+    /// Writes data into the buffer at a specified index.
+    ///
+    /// # Arguments
+    /// * `bytes` - A slice of bytes representing the value to write.
+    /// * `data_type` - The data type of the value (`I`, `E`, `D`, `A`, `F`).
+    /// * `idx` - The index at which to write the value.
+    ///
+    /// # Panics
+    /// Panics if the data type does not match the buffer type or if parsing fails.
     pub fn write_on_idx(&mut self, bytes : &[u8], data_type : char, idx : i64){
         let string = String::from_utf8_lossy(&bytes).trim_end().trim_start().to_string();
         match data_type {

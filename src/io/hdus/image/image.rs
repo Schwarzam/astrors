@@ -1,3 +1,6 @@
+/// Module for handling ImageData and related operations, including 
+/// parsing, reading, and writing FITS images.
+
 use std::fs::File;
 use std::io::Read;
 
@@ -20,6 +23,9 @@ use crate::io::hdus::image::utils::{
 };
 use ndarray::ArrayD;
 
+/// Enum to represent image data stored in various data types.
+/// This provides flexibility in handling different pixel data types
+/// in FITS files.
 pub enum ImageData {
     U8(ArrayD<u8>),
     I16(ArrayD<i16>),
@@ -30,10 +36,12 @@ pub enum ImageData {
 }
 
 impl ImageData {
+    /// Creates a new, empty ImageData.
     pub fn new() -> Self {
         ImageData::EMPTY
     }
 
+    /// Checks if the ImageData is empty.
     pub fn is_empty(&self) -> bool {
         match self {
             ImageData::EMPTY => true,
@@ -41,6 +49,7 @@ impl ImageData {
         }
     }
 
+    /// Retrieves the BITPIX value for the data type of the image.
     pub fn get_bitpix(&self) -> i32 {
         match self {
             ImageData::U8(_) => 8,
@@ -52,6 +61,7 @@ impl ImageData {
         }
     }
 
+    /// Returns the data type as a string (e.g., "uint8", "float32").
     pub fn get_dtype(&self) -> String {
         match self {
             ImageData::U8(_) => String::from("uint8"),
@@ -63,6 +73,7 @@ impl ImageData {
         }
     }
 
+    /// Retrieves the shape of the image as a vector of dimensions.
     pub fn get_shape(&self) -> Vec<usize> {
         match self {
             ImageData::U8(array) => {
@@ -85,12 +96,14 @@ impl ImageData {
     }
 }
 
+/// Struct to represent image data with a generic type parameter `T`.
 pub struct ImData<T> {
     pub data : ArrayD<T>
 }
 
 use std::fmt;
 
+/// Custom implementation of `Debug` for ImageData.
 impl fmt::Debug for ImageData {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
@@ -116,10 +129,13 @@ impl fmt::Debug for ImageData {
 
 
 
+/// Parser for handling FITS images.
 pub struct ImageParser;
 
 impl ImageParser {
     //TODO: Find where to implement BZERO and BSCALE
+    /// Calculates the total size (in bytes) required to store the image data
+    /// based on its header metadata.
     pub fn calculate_image_bytes(header: &Header) -> usize {
         let bitpix : i32 = header["BITPIX"].value.as_int().unwrap_or(0) as i32;
         let shape = get_shape(header).unwrap();
@@ -127,6 +143,7 @@ impl ImageParser {
         shape.iter().fold(1, |acc, x| acc * x) * dtype_bytes
     }
 
+    /// Reads image data from a file buffer and converts it into ImageData.
     pub fn read_from_buffer(f: &mut File, header: &mut Header) -> Result<ImageData, std::io::Error>  {
         let _naxis: usize = header["NAXIS"].value.as_int().unwrap_or(0) as usize;
     
@@ -151,6 +168,7 @@ impl ImageParser {
         ImageParser::image_buffer_to_ndarray(&databuf, shape, bitpix) 
     }
 
+    /// Converts raw image data from a buffer into a NumPy-like n-dimensional array.
     pub fn image_buffer_to_ndarray(databuf: &Vec<u8>, shape: Vec<usize>, bitpix: i32) -> Result<ImageData, std::io::Error>  {
         match bitpix {
             8 => {
@@ -194,6 +212,8 @@ impl ImageParser {
         }
     }
 
+    /// Converts image data into a raw byte buffer, using parallel processing
+    /// to enhance performance.
     pub fn ndarray_to_buffer_parallel(data: &ImageData) -> Vec<u8> {
         match data {
             ImageData::U8(array) => {
@@ -220,6 +240,7 @@ impl ImageParser {
         }
     }
 
+    /// Writes image metadata into the FITS header, updating fields like BITPIX and NAXIS.
     pub fn write_image_header(header: &mut Header, data: &ImageData) {
         let shape = data.get_shape();
         let mut naxis = shape.len();
@@ -246,6 +267,8 @@ impl ImageParser {
         }
     }
 
+    /// Writes image data to a buffer in FITS format, including padding to align to
+    /// the 2880-byte block size.
     pub fn write_to_buffer(data : &ImageData, mut writer: impl std::io::Write) -> std::io::Result<()> {
         let mut buffer = ImageParser::ndarray_to_buffer_parallel(&data);
         let remainder = buffer.len() % 2880;
