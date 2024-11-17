@@ -97,7 +97,7 @@ pub fn pre_bytes_to_u8_vec(bytes: &Vec<u8>, output: &mut Vec<u8>) {
     output.par_iter_mut()
         .enumerate()
         .for_each(|(i, item)| {
-            *item = bytes[i] as u8;
+            *item = bytes[i];
         });
 }
 

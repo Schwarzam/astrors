@@ -33,6 +33,12 @@ impl Debug for HDUList{
 /// 
 /// An HDUList is a collection of HDUs, where each HDU contains data and metadata.
 /// It provides methods for creating a new HDUList, reading from a file, and adding HDUs to the list.
+impl Default for HDUList {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl HDUList {
     /// Creates a new empty HDUList.
     pub fn new() -> Self {
@@ -128,15 +134,15 @@ impl HDU {
     /// # Returns
     ///
     /// Returns a `Result` containing the parsed HDU if successful, or an `std::io::Error` if an I/O error occurs.
-    pub fn read_from_file(mut f: &mut File, primary_hdu: Option<bool>) -> Result<Self, std::io::Error> {
-        let current_pos = f.seek(SeekFrom::Current(0))?;
+    pub fn read_from_file(f: &mut File, primary_hdu: Option<bool>) -> Result<Self, std::io::Error> {
+        let current_pos = f.stream_position()?;
         let mut header = Header::new();
-        header.read_from_file(&mut f)?;
+        header.read_from_file(f)?;
         
         if primary_hdu.unwrap_or(false) {
             f.seek(SeekFrom::Start(current_pos))?;
-            let primaryhdu = PrimaryHDU::read_from_file(&mut f)?;
-            return Ok(HDU::Primary(primaryhdu))
+            let primaryhdu = PrimaryHDU::read_from_file(f)?;
+            Ok(HDU::Primary(primaryhdu))
 
         } else if header.contains_key("XTENSION") {
             let mut hdu_type = header["XTENSION"].value.to_string();
@@ -144,17 +150,17 @@ impl HDU {
             match hdu_type.as_str() {
                 "IMAGE" => {
                     f.seek(SeekFrom::Start(current_pos))?;
-                    let imagehdu = ImageHDU::read_from_file(&mut f)?;
+                    let imagehdu = ImageHDU::read_from_file(f)?;
                     return Ok(HDU::Image(imagehdu))
                 },
                 "TABLE" => {
                     f.seek(SeekFrom::Start(current_pos))?;
-                    let tablehdu = TableHDU::read_from_file(&mut f)?;
+                    let tablehdu = TableHDU::read_from_file(f)?;
                     return Ok(HDU::Table(tablehdu))
                 },
                 "BINTABLE" => {
                     f.seek(SeekFrom::Start(current_pos))?;
-                    let bintablehdu = BinTableHDU::read_from_file(&mut f)?;
+                    let bintablehdu = BinTableHDU::read_from_file(f)?;
                     return Ok(HDU::BinTable(bintablehdu))
                 },
                 _ => {

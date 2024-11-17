@@ -66,12 +66,12 @@ impl TableHDU {
     /// # Behavior
     /// - Reads the header and validates mandatory keywords.
     /// - Extracts column metadata and reads table bytes into a DataFrame.
-    pub fn read_from_file(mut f: &mut File) -> Result<Self>  {
+    pub fn read_from_file(f: &mut File) -> Result<Self>  {
         //TODO: Check for mandatory words
         let mut header = Header::new();
-        header.read_from_file(&mut f)?;
+        header.read_from_file(f)?;
         let mut columns = read_tableinfo_from_header(&header).unwrap();
-        let df = read_table_bytes_to_df(&mut columns, header["NAXIS2"].value.as_int().unwrap_or(0), &mut f);
+        let df = read_table_bytes_to_df(&mut columns, header["NAXIS2"].value.as_int().unwrap_or(0), f);
         Ok(Self::new(header, df?))
     }
 
@@ -92,9 +92,9 @@ impl TableHDU {
         self.header.fix_header_w_mandatory_order(&MANDATORY_KEYWORDS);
         let columns = polars_to_columns(&self.data).unwrap();
         create_table_on_header(&mut self.header, &columns, self.data.height() as i64);
-        (&mut self.header).fix_header_w_mandatory_order(&MANDATORY_KEYWORDS);
+        self.header.fix_header_w_mandatory_order(&MANDATORY_KEYWORDS);
         self.header.write_to_buffer(&mut f)?;
-        df_to_buffer(columns, &self.data, &mut f)?;
+        df_to_buffer(columns, &self.data, f)?;
         Ok(())
     }
 }

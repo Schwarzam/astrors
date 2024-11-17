@@ -1,5 +1,4 @@
-use num_cpus::get;
-use rayon::{prelude::*, vec};
+use rayon::prelude::*;
 use polars::{prelude::NamedFrom, series::Series};
 
 use crate::io::hdus::bintable::*;
@@ -382,13 +381,13 @@ impl ColumnDataBuffer {
             ColumnDataBuffer::C(data) =>  Series::new(col_name, data),
             ColumnDataBuffer::M(data) =>  Series::new(col_name, data),
             ColumnDataBuffer::P(data) =>  {
-                let series_vec: Vec<Series> = data.into_iter().map(|vec| {
+                let series_vec: Vec<Series> = data.iter().map(|vec| {
                     Series::new("", &vec)
                 }).collect();
                 Series::new(col_name, series_vec)
             },  
             ColumnDataBuffer::Q(data) =>  {
-                let series_vec: Vec<Series> = data.into_iter().map(|vec| {
+                let series_vec: Vec<Series> = data.iter().map(|vec| {
                     Series::new("", &vec)
                 }).collect();
                 Series::new(col_name, series_vec)

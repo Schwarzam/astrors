@@ -17,7 +17,7 @@ use std::fs::File;
 /// - Attempts to read a single byte to determine if there is more data.
 /// - Restores the file cursor to its original position.
 pub fn buffer_has_more_data(file: &mut File) -> io::Result<bool> {
-    let current_pos = file.seek(SeekFrom::Current(0))?; // Save current position
+    let current_pos = file.stream_position()?; // Save current position
 
     let mut buffer = [0; 1]; // Small buffer to attempt reading
     let bytes_read = file.read(&mut buffer)?; // Attempt to read

@@ -49,7 +49,7 @@ impl PrimaryHDU {
         header.add_card(&Card::new("BITPIX".to_string(), "8".to_string(), Some("Number of bits per data pixel".to_string())));
         header.add_card(&Card::new("NAXIS".to_string(), "0".to_string(), Some("Number of data axes".to_string())));
         Self {
-            header: header,
+            header,
             data: ImageData::new(),
         }
     }
@@ -65,9 +65,9 @@ impl PrimaryHDU {
     /// # Behavior
     /// - Checks if the mandatory keywords are present and in order.
     /// - Returns an empty `ImageData` if `NAXIS` is 0.
-    pub fn read_from_file(mut f: &mut File) -> Result<Self>  {
+    pub fn read_from_file(f: &mut File) -> Result<Self>  {
         let mut header = Header::new();
-        header.read_from_file(&mut f)?;
+        header.read_from_file(f)?;
         
         if !header.are_mandatory_keywords_first(&MANDATORY_KEYWORDS) {
             // TODO: Return a proper error
@@ -77,10 +77,10 @@ impl PrimaryHDU {
 
         if header["NAXIS"].value.as_int().unwrap_or(0) == 0 {
             //actual position after header
-            return Ok(Self::new(header, ImageData::EMPTY));
+            Ok(Self::new(header, ImageData::EMPTY))
         }
         else {
-            let data: ImageData = ImageParser::read_from_buffer(&mut f, &mut header)?;
+            let data: ImageData = ImageParser::read_from_buffer(f, &mut header)?;
             Ok(Self::new(header, data))
         }
     }
@@ -95,18 +95,18 @@ impl PrimaryHDU {
     ///
     /// # Behavior
     /// - Calculates the size of the image data and adjusts to the next 2880-byte boundary.
-    pub fn get_end_byte_position(mut f: &mut File) -> usize {
-        let first_pos = f.seek(std::io::SeekFrom::Current(0)).unwrap();
+    pub fn get_end_byte_position(f: &mut File) -> usize {
+        let first_pos = f.stream_position().unwrap();
 
         let mut header = Header::new();
-        header.read_from_file(&mut f).unwrap();
+        header.read_from_file(f).unwrap();
 
         if header["NAXIS"].value.as_int().unwrap_or(0) == 0 {
             //actual position after header
-            return f.seek(std::io::SeekFrom::Current(0)).unwrap() as usize;
+            return f.stream_position().unwrap() as usize;
         }
 
-        let current = f.seek(std::io::SeekFrom::Current(0)).unwrap();
+        let current = f.stream_position().unwrap();
         let image_size = ImageParser::calculate_image_bytes(&header);
         let mut end = current + image_size as u64;
 

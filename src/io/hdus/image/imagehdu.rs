@@ -51,11 +51,11 @@ impl ImageHDU {
     /// # Returns:
     /// - `Ok(Self)`: An `ImageHDU` instance containing the header and data.
     /// - `Err`: If reading from the file fails or the header is corrupted.
-    pub fn read_from_file(mut f: &mut File) -> Result<Self>  {
+    pub fn read_from_file(f: &mut File) -> Result<Self>  {
         //TODO: Check for mandatory words
 
         let mut header = Header::new();
-        header.read_from_file(&mut f)?;
+        header.read_from_file(f)?;
         
         if !header.are_mandatory_keywords_first(&MANDATORY_KEYWORDS) {
             // TODO: Return a proper error
@@ -63,7 +63,7 @@ impl ImageHDU {
             panic!("Header corrupted");
         }
 
-        let data: ImageData = ImageParser::read_from_buffer(&mut f, &mut header)?;
+        let data: ImageData = ImageParser::read_from_buffer(f, &mut header)?;
         Ok(Self::new(header, data))
     }
 

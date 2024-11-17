@@ -1,7 +1,6 @@
 mod common;
 
-use std::{fs::File, io::Read};
-use astrors::io::Header;
+use std::fs::File;
 use astrors::io::hdus::primaryhdu::PrimaryHDU;
 use polars::frame::DataFrame;
 use std::io::Result;
@@ -12,7 +11,7 @@ use polars::prelude::*;
 use ndarray::prelude::*;
 
 use astrors::io::hdus::bintable::bintablehdu::BinTableHDU;
-use std::{io::{Write, Seek}, ops::Mul, fmt::Error};
+use std::io::Seek;
 
 
 #[test]

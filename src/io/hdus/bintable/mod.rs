@@ -114,12 +114,10 @@ pub fn split_buffer(buffer_size: usize, n: u16, row_size: u16) -> Vec<(usize, us
     for i in 0..n {
         if n - 1 == i {
             end = buffer_size;
+        } else if (start + nbufs) % row_size as usize != 0 {
+            end = start + nbufs + row_size as usize - (start + nbufs) % row_size as usize;
         } else {
-            if (start + nbufs) % row_size as usize != 0 {
-                end = start + nbufs + row_size as usize - (start + nbufs) % row_size as usize;
-            } else {
-                end = start + nbufs;
-            }
+            end = start + nbufs;
         }
         limits.push((start, end));
         start = end;

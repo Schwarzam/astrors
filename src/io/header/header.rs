@@ -28,6 +28,12 @@ impl IndexMut<&str> for Header {
     }
 }
 
+impl Default for Header {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Header {
     /// Constructs a new empty Header.
     pub fn new() -> Self {
@@ -178,7 +184,7 @@ impl Header {
                     break 'outer;
                 }
                 
-                if !card_str.contains("CONTINUE  ") && last_card.keyword != "" {
+                if !card_str.contains("CONTINUE  ") && !last_card.keyword.is_empty() {
                     self.add_card(&last_card);
                     last_card = Card::default();
                 }

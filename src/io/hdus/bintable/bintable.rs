@@ -52,7 +52,7 @@ impl Column {
             tform,
             tunit,
             tdisp,
-            start_address: start_address, 
+            start_address, 
             type_bytes: get_data_bytes_size(&tform2),
             type_letter: get_first_letter(&tform2).to_string(),
         };
@@ -128,7 +128,7 @@ pub fn read_table_bytes_to_df(columns : &mut Vec<Column>, header: &Header, file:
         n_threads = 1;
     }
 
-    let bytes_per_row = calculate_number_of_bytes_of_row(&columns);
+    let bytes_per_row = calculate_number_of_bytes_of_row(columns);
     let buffer_size = nrows as usize * bytes_per_row;
     let limits = split_buffer(buffer_size, n_chunks, bytes_per_row as u16);
 
@@ -165,7 +165,7 @@ pub fn read_table_bytes_to_df(columns : &mut Vec<Column>, header: &Header, file:
                 local_buf_cols.push(Buffer::new(&column.tform, nbuffer_rows as i32));
             });
             
-            (0..nbuffer_rows).into_iter().for_each(|i| {
+            (0..nbuffer_rows).for_each(|i| {
                 let row_start_idx = i * bytes_per_row;
                 let row = &local_buffer[row_start_idx..row_start_idx + bytes_per_row];
                 columns.iter().enumerate().for_each(|(j, column)| {
@@ -176,7 +176,7 @@ pub fn read_table_bytes_to_df(columns : &mut Vec<Column>, header: &Header, file:
 
             let df_cols = columns.iter().enumerate().map(|(i, column)| {
                 if (get_first_letter(&column.tform) == "P") | (get_first_letter(&column.tform) == "Q") {
-                    &local_buf_cols[i].read_var_len_cols();
+                    local_buf_cols[i].read_var_len_cols();
                 }
                 
                 let buf_col = &local_buf_cols[i];
@@ -193,7 +193,7 @@ pub fn read_table_bytes_to_df(columns : &mut Vec<Column>, header: &Header, file:
 
     let mut final_df = results[0].as_ref().unwrap().clone();
     for i in 1..results.len() {
-        final_df.vstack_mut(&results[i].as_ref().unwrap()).unwrap();
+        final_df.vstack_mut(results[i].as_ref().unwrap()).unwrap();
     }
     pad_read_buffer_to_fits_block(file, buffer_size)?;
 
@@ -215,7 +215,7 @@ pub fn polars_to_columns(df: &DataFrame) -> Result<Vec<Column>, std::io::Error> 
     let mut start_address = 0;
     let mut sum_to_address = 0;
     
-    let columns : Vec<Column> = df.get_columns().into_iter().map(|series| {
+    let columns : Vec<Column> = df.get_columns().iter().map(|series| {
         let ttype = series.name();
         let tform = match series.dtype() {
             DataType::Boolean => {
@@ -256,7 +256,7 @@ pub fn polars_to_columns(df: &DataFrame) -> Result<Vec<Column>, std::io::Error> 
 
                 //Max length should be even number
                 if max_length % 2 != 0 {
-                    max_length += 1 as usize;
+                    max_length += 1_usize;
                 }
                 sum_to_address = max_length;
                 format!("{}A", max_length)
@@ -432,7 +432,7 @@ pub fn df_to_buffer(columns: Vec<Column>, df: &DataFrame, file: &mut File) -> Re
                             .into_iter()
                             .enumerate()
                             .for_each(|(j, item)| {
-                                let bytes = item.unwrap() as u8;
+                                let bytes = item.unwrap();
                                 let row_start_add = j * bytes_per_row;
                                 let col_start_add = row_start_add + column.start_address;
                                 local_buffer[col_start_add..col_start_add + column.type_bytes].copy_from_slice(&[bytes]);
@@ -444,7 +444,7 @@ pub fn df_to_buffer(columns: Vec<Column>, df: &DataFrame, file: &mut File) -> Re
                             .into_iter()
                             .enumerate()
                             .for_each(|(j, item)| {
-                                let bytes = item.unwrap() as i8;
+                                let bytes = item.unwrap();
                                 let row_start_add = j * bytes_per_row;
                                 let col_start_add = row_start_add + column.start_address;
                                 local_buffer[col_start_add..col_start_add + column.type_bytes].copy_from_slice(&bytes.to_be_bytes());
@@ -456,7 +456,7 @@ pub fn df_to_buffer(columns: Vec<Column>, df: &DataFrame, file: &mut File) -> Re
                             .into_iter()
                             .enumerate()
                             .for_each(|(j, item)| {
-                                let bytes = item.unwrap() as i16;
+                                let bytes = item.unwrap();
                                 let row_start_add = j * bytes_per_row;
                                 let col_start_add = row_start_add + column.start_address;
                                 local_buffer[col_start_add..col_start_add + column.type_bytes].copy_from_slice(&bytes.to_be_bytes());
@@ -468,7 +468,7 @@ pub fn df_to_buffer(columns: Vec<Column>, df: &DataFrame, file: &mut File) -> Re
                             .into_iter()
                             .enumerate()
                             .for_each(|(j, item)| {
-                                let bytes = item.unwrap() as i32;
+                                let bytes = item.unwrap();
                                 let row_start_add = j * bytes_per_row;
                                 let col_start_add = row_start_add + column.start_address;
                                 local_buffer[col_start_add..col_start_add + column.type_bytes].copy_from_slice(&bytes.to_be_bytes());
@@ -480,7 +480,7 @@ pub fn df_to_buffer(columns: Vec<Column>, df: &DataFrame, file: &mut File) -> Re
                             .into_iter()
                             .enumerate()
                             .for_each(|(j, item)| {
-                                let bytes = item.unwrap() as i64;
+                                let bytes = item.unwrap();
                                 let row_start_add = j * bytes_per_row;
                                 let col_start_add = row_start_add + column.start_address;
                                 local_buffer[col_start_add..col_start_add + column.type_bytes].copy_from_slice(&bytes.to_be_bytes());
@@ -492,7 +492,7 @@ pub fn df_to_buffer(columns: Vec<Column>, df: &DataFrame, file: &mut File) -> Re
                             .into_iter()
                             .enumerate()
                             .for_each(|(j, item)| {
-                                let bytes = item.unwrap() as f32;
+                                let bytes = item.unwrap();
                                 let row_start_add = j * bytes_per_row;
                                 let col_start_add = row_start_add + column.start_address;
                                 local_buffer[col_start_add..col_start_add + column.type_bytes].copy_from_slice(&bytes.to_be_bytes());
@@ -504,7 +504,7 @@ pub fn df_to_buffer(columns: Vec<Column>, df: &DataFrame, file: &mut File) -> Re
                             .into_iter()
                             .enumerate()
                             .for_each(|(j, item)| {
-                                let bytes = item.unwrap() as f64;
+                                let bytes = item.unwrap();
                                 let row_start_add = j * bytes_per_row;
                                 let col_start_add = row_start_add + column.start_address;
                                 local_buffer[col_start_add..col_start_add + column.type_bytes].copy_from_slice(&bytes.to_be_bytes());
@@ -542,7 +542,7 @@ pub fn df_to_buffer(columns: Vec<Column>, df: &DataFrame, file: &mut File) -> Re
                                         
                                         array.iter().enumerate().for_each(|(k, it )| {
                                             if let AnyValue::UInt8(item) = it {
-                                                let bytes = item as u8;
+                                                let bytes = item;
                                                 local_buffer[col_start_add + k..col_start_add + k + 1].copy_from_slice(&[bytes]);
                                             }
                                         });
@@ -560,7 +560,7 @@ pub fn df_to_buffer(columns: Vec<Column>, df: &DataFrame, file: &mut File) -> Re
                                         
                                         array.iter().enumerate().for_each(|(k, it )| {
                                             if let AnyValue::Int8(item) = it {
-                                                let bytes = item as i8;
+                                                let bytes = item;
                                                 local_buffer[col_start_add + k..col_start_add + k + 1].copy_from_slice(&bytes.to_be_bytes());
                                             }
                                         });
@@ -578,7 +578,7 @@ pub fn df_to_buffer(columns: Vec<Column>, df: &DataFrame, file: &mut File) -> Re
                                         
                                         array.iter().enumerate().for_each(|(k, it )| {
                                             if let AnyValue::Int16(item) = it {
-                                                let bytes = item as i16;
+                                                let bytes = item;
                                                 local_buffer[col_start_add + k * 2..col_start_add + k * 2 + 2].copy_from_slice(&bytes.to_be_bytes());
                                             }
                                         });
@@ -596,7 +596,7 @@ pub fn df_to_buffer(columns: Vec<Column>, df: &DataFrame, file: &mut File) -> Re
                                         
                                         array.iter().enumerate().for_each(|(k, it )| {
                                             if let AnyValue::Int32(item) = it {
-                                                let bytes = item as i32;
+                                                let bytes = item;
                                                 local_buffer[col_start_add + k * 4..col_start_add + k * 4 + 4].copy_from_slice(&bytes.to_be_bytes());
                                             }
                                         });
@@ -614,7 +614,7 @@ pub fn df_to_buffer(columns: Vec<Column>, df: &DataFrame, file: &mut File) -> Re
                                         
                                         array.iter().enumerate().for_each(|(k, it )| {
                                             if let AnyValue::Int64(item) = it {
-                                                let bytes = item as i64;
+                                                let bytes = item;
                                                 local_buffer[col_start_add + k * 8..col_start_add + k * 8 + 8].copy_from_slice(&bytes.to_be_bytes());
                                             }
                                         });
@@ -632,7 +632,7 @@ pub fn df_to_buffer(columns: Vec<Column>, df: &DataFrame, file: &mut File) -> Re
                                         
                                         array.iter().enumerate().for_each(|(k, it )| {
                                             if let AnyValue::Float32(item) = it {
-                                                let bytes = item as f32;
+                                                let bytes = item;
                                                 local_buffer[col_start_add + k * 4..col_start_add + k * 4 + 4].copy_from_slice(&bytes.to_be_bytes());
                                             }
                                         });
@@ -650,7 +650,7 @@ pub fn df_to_buffer(columns: Vec<Column>, df: &DataFrame, file: &mut File) -> Re
                                         
                                         array.iter().enumerate().for_each(|(k, it )| {
                                             if let AnyValue::Float64(item) = it {
-                                                let bytes = item as f64;
+                                                let bytes = item;
                                                 local_buffer[col_start_add + k * 8..col_start_add + k * 8 + 8].copy_from_slice(&bytes.to_be_bytes());
                                             }
                                         });
@@ -702,7 +702,7 @@ pub fn df_to_buffer(columns: Vec<Column>, df: &DataFrame, file: &mut File) -> Re
         bytes_written += file.write(&buffer).unwrap();
     });
     
-    if bytes_written < nrows as usize * bytes_per_row {
+    if bytes_written < nrows * bytes_per_row {
         panic!("Error writing to file");
     }
 

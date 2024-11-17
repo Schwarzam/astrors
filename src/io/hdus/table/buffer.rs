@@ -92,14 +92,14 @@ impl ColumnDataBuffer {
     /// # Returns
     /// A `Series` representing the data in the buffer.
     pub fn to_series(&self, col_name : &str) -> Series {
-        let series = match self {
+        
+        match self {
             ColumnDataBuffer::I(data) =>  Series::new(col_name, data),
             ColumnDataBuffer::E(data) =>  Series::new(col_name, data),
             ColumnDataBuffer::D(data) =>  Series::new(col_name, data),
             ColumnDataBuffer::A(data) =>  Series::new(col_name, data),
             ColumnDataBuffer::F(data) =>  Series::new(col_name, data),
-        };
-        series
+        }
     }
 
     /// Clears all elements in the buffer.
@@ -123,7 +123,7 @@ impl ColumnDataBuffer {
     /// # Panics
     /// Panics if the data type does not match the buffer type or if parsing fails.
     pub fn write_on_idx(&mut self, bytes : &[u8], data_type : char, idx : i64){
-        let string = String::from_utf8_lossy(&bytes).trim_end().trim_start().to_string();
+        let string = String::from_utf8_lossy(bytes).trim_end().trim_start().to_string();
         match data_type {
             'I' => {
                 // parse bytes to i32

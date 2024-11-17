@@ -1,6 +1,4 @@
 
-use astrors::io::hdus::bintable::bintable::read_tableinfo_from_header;
-use astrors::fits;
 use astrors::io::hdus::bintable::bintablehdu::BinTableHDU;
 use astrors::io::hdus::primaryhdu::PrimaryHDU;
 

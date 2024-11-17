@@ -53,17 +53,17 @@ impl Column {
     /// A new `Column` instance initialized with the provided attributes.
     pub fn new(ttype: String, tform: String, tunit: Option<String>, tdisp: Option<String>, tbcol: Option<i32>, start_address: usize) -> Self {
         let tform2 = tform.clone();
-        let column = Column {
+        
+        Column {
             ttype,
             tform,
             tunit,
             tdisp,
             tbcol,
-            start_address: start_address, 
+            start_address, 
             type_bytes: get_tform_type_size(&tform2).1,
             char_type: get_tform_type_size(&tform2).0,
-        };
-        column
+        }
     }
 }
 
@@ -181,7 +181,7 @@ pub fn read_table_bytes_to_df(columns : &mut Vec<Column>, nrows: i64, file: &mut
     let pool = rayon::ThreadPoolBuilder::new().num_threads(n_threads as usize).build().unwrap();
     let results : Vec<Result<DataFrame, std::io::Error>> = pool.install(|| { 
         limits.into_par_iter().map(|(start, end)| {
-            let local_buffer = &buffer[start as usize..end as usize];
+            let local_buffer = &buffer[start..end];
             let nbuffer_rows = (end - start) / bytes_per_row;
             
             let mut local_buf_cols : Vec<ColumnDataBuffer> = Vec::new();
@@ -189,7 +189,7 @@ pub fn read_table_bytes_to_df(columns : &mut Vec<Column>, nrows: i64, file: &mut
                 local_buf_cols.push(ColumnDataBuffer::new(&column.tform, nbuffer_rows as i32));
             });
 
-            (0..nbuffer_rows).into_iter().for_each(|i| {
+            (0..nbuffer_rows).for_each(|i| {
                 let row_start_idx = i * bytes_per_row;
                 let row = &local_buffer[row_start_idx..row_start_idx + bytes_per_row];
                 columns.iter().enumerate().for_each(|(j, column)| {
@@ -213,9 +213,9 @@ pub fn read_table_bytes_to_df(columns : &mut Vec<Column>, nrows: i64, file: &mut
     });
     drop(buffer);
 
-    let mut final_df = results[0].as_ref().unwrap().clone();
+    let final_df = results[0].as_ref().unwrap().clone();
     for i in 1..results.len() {
-        final_df.vstack(&results[i].as_ref().unwrap());
+        final_df.vstack(results[i].as_ref().unwrap());
     }
 
     pad_read_buffer_to_fits_block(file, buffer_size)?;
@@ -239,7 +239,7 @@ pub fn polars_to_columns(df: &DataFrame) -> Result<Vec<Column>, std::io::Error> 
     let mut sum_to_address : usize = 0;
     let mut max_length = None;
 
-    let columns : Vec<Column> = df.get_columns().into_iter().map(|series| {
+    let columns : Vec<Column> = df.get_columns().iter().map(|series| {
         let ttype = series.name().to_string();
         let tform = match series.dtype() {
             DataType::Int32 => {
@@ -258,7 +258,7 @@ pub fn polars_to_columns(df: &DataFrame) -> Result<Vec<Column>, std::io::Error> 
                 let data = &series.str().unwrap();
                 let mut lmax_length = data.iter().map(|item| item.unwrap_or("").len()).max().unwrap();
                 if lmax_length % 2 != 0 {
-                    lmax_length += 1 as usize;
+                    lmax_length += 1_usize;
                 }
                 sum_to_address = lmax_length + 1;
                 max_length = Some(lmax_length);
@@ -403,7 +403,7 @@ pub fn df_to_buffer(columns: Vec<Column>, df: &DataFrame, file: &mut File) -> Re
 
                                 let row_start_add = j * bytes_per_row;
                                 let col_start_add = row_start_add + column.start_address;
-                                local_buffer[col_start_add..col_start_add + column.type_bytes + 1].copy_from_slice(&string.as_bytes());
+                                local_buffer[col_start_add..col_start_add + column.type_bytes + 1].copy_from_slice(string.as_bytes());
                             });
                     },
                     DataType::Float32 => {
@@ -425,7 +425,7 @@ pub fn df_to_buffer(columns: Vec<Column>, df: &DataFrame, file: &mut File) -> Re
 
                                 let row_start_add = j * bytes_per_row;
                                 let col_start_add = row_start_add + column.start_address;
-                                local_buffer[col_start_add..col_start_add + column.type_bytes + 1].copy_from_slice(&string.as_bytes());
+                                local_buffer[col_start_add..col_start_add + column.type_bytes + 1].copy_from_slice(string.as_bytes());
                             });
                     },
                     DataType::Float64 => {
@@ -448,7 +448,7 @@ pub fn df_to_buffer(columns: Vec<Column>, df: &DataFrame, file: &mut File) -> Re
 
                                 let row_start_add = j * bytes_per_row;
                                 let col_start_add = row_start_add + column.start_address;
-                                local_buffer[col_start_add..col_start_add + column.type_bytes + 1].copy_from_slice(&string.as_bytes());
+                                local_buffer[col_start_add..col_start_add + column.type_bytes + 1].copy_from_slice(string.as_bytes());
                             });
                     },
                     DataType::String => {
@@ -487,7 +487,7 @@ pub fn df_to_buffer(columns: Vec<Column>, df: &DataFrame, file: &mut File) -> Re
         bytes_written += file.write(&buf).unwrap();
     });
 
-    if bytes_written < nrows as usize * bytes_per_row {
+    if bytes_written < nrows * bytes_per_row {
         panic!("Error writing to file");
     }
 

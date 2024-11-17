@@ -6,7 +6,7 @@ use std::io::Result;
 
 #[cfg(test)]
 mod image_tests {
-    use std::{fs::File, io::Write, ops::Mul};
+    use std::fs::File;
     use super::*;
 
     #[test]

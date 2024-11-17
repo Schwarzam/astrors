@@ -1,7 +1,6 @@
 mod common;
 
 use astrors::io::hdus::primaryhdu::PrimaryHDU;
-use astrors::io::hdus::utils::buffer_has_more_data;
 use astrors::io::hdulist::HDUList;
 use astrors::io::get_data;
 use astrors::fits;
@@ -15,8 +14,8 @@ use std::io::Result;
 
 #[cfg(test)]
 mod hdu_tests {
-    use std::{fs::File, io::{Write, Seek}};
-    use astrors::io::{hdulist::HDU, hdus::image::ImageData, Header};
+    use std::fs::File;
+    use astrors::io::{hdulist::HDU, hdus::image::ImageData};
 
     use super::*;
 
@@ -100,7 +99,7 @@ mod hdu_tests {
         let mut primary_hdu = PrimaryHDU::read_from_file(&mut f)?;
         
         let outfile = common::get_outtestdata_path("test_modify.fits");
-        let mut f_out: File = File::create(&outfile)?;
+        let f_out: File = File::create(&outfile)?;
 
         let mut hdus = HDUList::new();
 
@@ -119,7 +118,7 @@ mod hdu_tests {
             Series::new("MAG", vec![1, 2, 3, 4, 5]),
         ]).unwrap();
         
-        let mut bintable = BinTableHDU::new_data(df);
+        let bintable = BinTableHDU::new_data(df);
         hdus.add_hdu(HDU::BinTable(bintable));
 
         hdus.write_to(outfile.to_str().unwrap())?;

@@ -1,6 +1,5 @@
 mod common;
 
-use astrors::io::Header;
 use astrors::io::hdus::primaryhdu::PrimaryHDU;
 use std::io::Result;
 
@@ -8,21 +7,20 @@ use polars::frame::DataFrame;
 use polars::series::Series;
 use polars::prelude::*;
 
-use astrors::io::hdus::table::table::*;
 
 use astrors::io::hdus::table::tablehdu::TableHDU;
 
 #[cfg(test)]
 mod tablehdu_tests {
-    use std::{fs::File, io::{Write, Seek}, ops::Mul, fmt::Error};
-    use astrors::io::hdus::{primaryhdu, table::{table::polars_to_columns, tablehdu}};
+    use std::io::Seek;
+    
 
     use super::*;
 
 
     #[test]
     fn tablehdu_test() -> Result<()> {
-        use std::{fs::File, io::Read};
+        use std::fs::File;
         let testfile = common::get_testdata_path("WFPC2u57.fits");
         let mut f: File = File::open(testfile)?;
         
@@ -47,7 +45,7 @@ mod tablehdu_tests {
 
     #[test]
     fn tablehdu_newtable() -> Result<()> {
-        use std::{fs::File, io::Read};
+        use std::fs::File;
         let testfile = common::get_testdata_path("WFPC2u57.fits");
         let mut f: File = File::open(testfile)?;
         
@@ -56,7 +54,7 @@ mod tablehdu_tests {
         //Seek end_pos 
         f.seek(std::io::SeekFrom::Start(end_pos as u64))?;
 
-        let mut tablehdu = TableHDU::read_from_file(&mut f)?;
+        let tablehdu = TableHDU::read_from_file(&mut f)?;
         
         println!("Df {:} ", tablehdu.data);
         let outfile = common::get_outtestdata_path("test_table.fits");

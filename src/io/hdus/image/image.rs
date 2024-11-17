@@ -35,6 +35,12 @@ pub enum ImageData {
     EMPTY,
 }
 
+impl Default for ImageData {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ImageData {
     /// Creates a new, empty ImageData.
     pub fn new() -> Self {
@@ -140,7 +146,7 @@ impl ImageParser {
         let bitpix : i32 = header["BITPIX"].value.as_int().unwrap_or(0) as i32;
         let shape = get_shape(header).unwrap();
         let dtype_bytes = nbytes_from_bitpix(bitpix);
-        shape.iter().fold(1, |acc, x| acc * x) * dtype_bytes
+        shape.iter().product::<usize>() * dtype_bytes
     }
 
     /// Reads image data from a file buffer and converts it into ImageData.
@@ -153,7 +159,7 @@ impl ImageParser {
         // Get data type from BITPIX
         let dtype_bytes = nbytes_from_bitpix(bitpix);
 
-        let total_bytes = shape.iter().fold(1, |acc, x| acc * x) * dtype_bytes;
+        let total_bytes = shape.iter().product::<usize>() * dtype_bytes;
         let mut databuf = vec![0; total_bytes]; 
         let _ = f.read(&mut databuf)?;
 
@@ -172,36 +178,36 @@ impl ImageParser {
     pub fn image_buffer_to_ndarray(databuf: &Vec<u8>, shape: Vec<usize>, bitpix: i32) -> Result<ImageData, std::io::Error>  {
         match bitpix {
             8 => {
-                let mut vect: Vec<u8> = vec![0; databuf.len() / 1];
-                pre_bytes_to_u8_vec(&databuf, &mut vect);
+                let mut vect: Vec<u8> = vec![0; databuf.len()];
+                pre_bytes_to_u8_vec(databuf, &mut vect);
                 let ndarray = vec_to_ndarray(vect, shape);
                 let data: ImageData = ImageData::U8(ndarray);
                 Ok(data)
             },
             16 => {
                 let mut vect: Vec<i16> = vec![0; databuf.len() / 2];
-                pre_bytes_to_i16_vec(&databuf, &mut vect);
+                pre_bytes_to_i16_vec(databuf, &mut vect);
                 let ndarray = vec_to_ndarray(vect, shape);
                 let data = ImageData::I16(ndarray);
                 Ok(data)
             },
             32 => {
                 let mut vect: Vec<i32> = vec![0; databuf.len() / 4];
-                pre_bytes_to_i32_vec(&databuf, &mut vect);
+                pre_bytes_to_i32_vec(databuf, &mut vect);
                 let ndarray = vec_to_ndarray(vect, shape);
                 let data = ImageData::I32(ndarray);
                 Ok(data)
             },
             -32 => {
                 let mut vect: Vec<f32> = vec![0.0; databuf.len() / 4];
-                pre_bytes_to_f32_vec(&databuf, &mut vect);
+                pre_bytes_to_f32_vec(databuf, &mut vect);
                 let ndarray: ArrayBase<ndarray::OwnedRepr<f32>, ndarray::Dim<ndarray::IxDynImpl>> = vec_to_ndarray(vect, shape);
                 let data = ImageData::F32(ndarray);
                 Ok(data)
             },
             -64 => {
                 let mut vect: Vec<f64> = vec![0.0; databuf.len() / 8];
-                pre_bytes_to_f64_vec(&databuf, &mut vect);
+                pre_bytes_to_f64_vec(databuf, &mut vect);
                 let ndarray = vec_to_ndarray(vect, shape);
                 let data = ImageData::F64(ndarray);
                 Ok(data)
@@ -270,7 +276,7 @@ impl ImageParser {
     /// Writes image data to a buffer in FITS format, including padding to align to
     /// the 2880-byte block size.
     pub fn write_to_buffer(data : &ImageData, mut writer: impl std::io::Write) -> std::io::Result<()> {
-        let mut buffer = ImageParser::ndarray_to_buffer_parallel(&data);
+        let mut buffer = ImageParser::ndarray_to_buffer_parallel(data);
         let remainder = buffer.len() % 2880;
         if remainder != 0 {
             let padding = vec![0; 2880 - remainder];

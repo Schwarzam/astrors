@@ -98,9 +98,9 @@ impl Card {
     /// - `comment`: An optional comment.
     pub fn new(keyword: String, value: String, comment: Option<String>) -> Self {
         Card {
-            keyword: keyword,
+            keyword,
             value: check_type(&value),  // Assuming value is always a string
-            comment: comment,
+            comment,
         }
     }
 
@@ -190,7 +190,7 @@ impl Card {
     /// - `keyword_string`: The formatted keyword string.
     /// - `bytes_count`: A counter to track the number of bytes written.
     fn write_string_card<W: Write>(&self, writer: &mut W, keyword_string: String, bytes_count: &mut i32) -> std::io::Result<()> {
-        if self.keyword == "" {
+        if self.keyword.is_empty() {
             return Ok(());
         }
         
@@ -198,7 +198,7 @@ impl Card {
         let remaining_value = if formatted_value.len() > 67 {
             let remainder = Some(formatted_value[67..].to_string());
             formatted_value.truncate(67);
-            formatted_value.push_str("&");
+            formatted_value.push('&');
             remainder
         } else {
             None
@@ -226,7 +226,7 @@ impl Card {
 
     fn write_other_card<W: Write>(&self, writer: &mut W, keyword_string: String, bytes_count: &mut i32) -> std::io::Result<()> {
         // using unwrap_or with an empty string as default
-        if self.keyword == "" {
+        if self.keyword.is_empty() {
             return Ok(());
         }
 
@@ -252,7 +252,7 @@ impl Card {
     }
     
     pub fn parse_card(card_str: String) -> Self {
-        if card_str.trim().len() < 1 {
+        if card_str.trim().is_empty() {
             return Card::default();
         }
 
@@ -290,7 +290,7 @@ impl Card {
         };
         // println!("{} {} {:?} {:?}", keyword, value, comment, card_type);
 
-        Card { keyword: keyword, value: check_type(&value), comment: comment }
+        Card { keyword, value: check_type(&value), comment }
     }
 
     pub fn continue_card(card: &mut Card, card_str: String){

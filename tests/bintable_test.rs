@@ -1,6 +1,5 @@
 mod common;
 
-use std::{fs::File, io::Read};
 use astrors::io::Header;
 use astrors::io::hdus::primaryhdu::PrimaryHDU;
 use std::io::Result;
@@ -13,7 +12,7 @@ use astrors::io::hdus::bintable::bintablehdu::BinTableHDU;
 
 #[cfg(test)]
 mod tablehdu_tests {
-    use std::{fs::File, io::{Write, Seek}, ops::Mul, fmt::Error};
+    use std::{fs::File, io::Seek};
 
     use super::*;
 
@@ -28,7 +27,7 @@ mod tablehdu_tests {
         //Seek end_pos 
         f.seek(std::io::SeekFrom::Start(end_pos as u64))?;
 
-        let mut buffer = vec![0; 2880];
+        let buffer = vec![0; 2880];
 
         let mut header = Header::new();
         header.read_from_file(&mut f)?;
