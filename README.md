@@ -1,3 +1,11 @@
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="dev/logo_black.png">
+    <source media="(prefers-color-scheme: light)" srcset="dev/logo_white.png">
+    <img alt="astrors Logo" src="dev/logo_white.png">
+  </picture>
+</p>
+
 ## astrors 
 
 [![](https://img.shields.io/crates/v/astrors.svg)](https://crates.io/crates/astrors)
