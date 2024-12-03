@@ -2,7 +2,7 @@
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="dev/logo_white.png">
     <source media="(prefers-color-scheme: light)" srcset="dev/logo_black.png">
-    <img alt="astrors Logo" src="dev/logo_white.png">
+    <img alt="astrors Logo" src="dev/logo_white.png" width="200">
   </picture>
 </p>
 
